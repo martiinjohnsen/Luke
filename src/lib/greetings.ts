@@ -5,6 +5,10 @@ export type Greeting = GreetingDraft & {calendarId:string;userId:string;day:numb
 export function sameGreeting(item:Greeting,id:string,day:number,userId:string,mode?:PreviewGreeting["mode"]) {
   return item.calendarId===id && item.day===day && item.userId===userId && item.previewMode===mode;
 }
+export function greetingsForCalendar(items:Greeting[],calendarId:string):Greeting[] {
+  return items.filter(item=>item.calendarId===calendarId && item.owner && item.revision>0)
+    .sort((a,b)=>a.day-b.day || a.name.localeCompare(b.name,"nb") || b.updatedAt.localeCompare(a.updatedAt));
+}
 /** Temporary trials stay in the current app session and never become real replies. */
 export function temporaryGreeting(items:Greeting[],id:string,day:number,userId:string,mode:PreviewGreeting["mode"],draft?:GreetingDraft,revision=0):Greeting[] {
   const existing=items.find(item=>sameGreeting(item,id,day,userId,mode));

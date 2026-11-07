@@ -7,12 +7,13 @@ import { AudioPlayer } from "./media";
 import { Icon } from "./icons";
 
 type PendingAudio = { blob: Blob; url: string };
-export function AudioInput({ value, context, onChange, onBusyChange, beforeUpload }: {
+export function AudioInput({ value, context, onChange, onBusyChange, beforeUpload, disabled=false }: {
   value?: string;
   context: MediaContext;
   onChange: (source: string) => void;
   onBusyChange?: (busy: boolean) => void;
   beforeUpload?: () => Promise<void>;
+  disabled?: boolean;
 }) {
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -87,7 +88,7 @@ export function AudioInput({ value, context, onChange, onBusyChange, beforeUploa
     if (recorder.current?.state === "recording") recorder.current.stop();
   }
   async function start() {
-    if (busy || pending.current) return;
+    if (disabled || busy || pending.current) return;
     occupied(true);
     setError("");
     discard.current = false;
@@ -147,24 +148,23 @@ export function AudioInput({ value, context, onChange, onBusyChange, beforeUploa
   return (
     <div className="audio-input">
       {pendingUrl ? <AudioPlayer src={pendingUrl} label="Lydhilsenen din · ikke lagret ennå" />
-        : value && <AudioPlayer src={value} />}
+        : value && <AudioPlayer src={value} compact />}
       <div className="audio-input-actions">
         {recording ? <>
           <span className="recording-time" role="timer"><i />{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}</span>
-          <button type="button" className="button primary" onClick={() => stop()}><Icon name="check" size={16} />Stopp opptak</button>
-          <button type="button" className="button secondary" onClick={() => stop(true)}>Avbryt opptak</button>
+          <button type="button" className="button primary small-button" onClick={() => stop()}><Icon name="check" size={16} />Stopp opptak</button>
+          <button type="button" className="button secondary small-button" onClick={() => stop(true)}>Avbryt opptak</button>
         </> : <>
-          <button type="button" className="button primary" disabled={busy || !!pendingUrl} onClick={() => void start()}>
-            <Icon name="mic" size={17} />{busy ? "Lagrer lyd …" : value ? "Spill inn på nytt" : "Spill inn hilsen"}
+          <button type="button" className="button secondary small-button" disabled={disabled || busy || !!pendingUrl} onClick={() => void start()}>
+            <Icon name="mic" size={16} />{busy ? "Lagrer lyd …" : value ? "Spill inn på nytt" : "Spill inn hilsen"}
           </button>
-          <label className="button secondary small-button">Velg lydfil
-            <input type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" disabled={busy || !!pendingUrl} onChange={event => {
+          <label className="button secondary small-button"><Icon name="upload" size={16}/>Velg lydfil
+            <input type="file" accept="audio/*,.m4a,.mp3,.wav,.ogg,.webm" disabled={disabled || busy || !!pendingUrl} onChange={event => {
               const file = event.target.files?.[0];
               if (file) void upload(file);
               event.target.value = "";
             }} />
           </label>
-          {value && !pendingUrl && <button type="button" className="icon-button" aria-label="Fjern lydhilsen" disabled={busy} onClick={() => onChange("")}><Icon name="trash" size={16} /></button>}
         </>}
       </div>
       <p className="field-help">Opptak opptil 3 minutter. Lydfiler opptil 8 MB.</p>

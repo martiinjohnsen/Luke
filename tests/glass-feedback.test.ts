@@ -8,7 +8,9 @@ test("shared feedback handles touch activation and automatic previews, and honor
   let reduced=false,coarse=false;
   class Button {
     isConnected=true;children:Button[]=[];animations:{frames:Keyframe[];cancelled:boolean;onfinish:(()=>void)|null;cancel:()=>void}[]=[];
-    closest(){return this;}getAttribute(){return null;}
+    isDoor=false;cell:Button|null=null;
+    closest(selector:string){return selector===".recipient-door-cell" ? this.cell : this;}getAttribute(){return null;}
+    matches(selector:string){return selector===".recipient-door" && this.isDoor;}
     querySelectorAll(){return this.children;}
     animate(frames:Keyframe[]) {
       const animation={frames,cancelled:false,onfinish:null as (()=>void)|null,cancel(){this.cancelled=true;}};
@@ -22,9 +24,9 @@ test("shared feedback handles touch activation and automatic previews, and honor
   const stop=installGlassFeedback(()=>0);
   t.after(()=>{stop();for(const name of names){const descriptor=original.get(name);if(descriptor) Object.defineProperty(globalThis,name,descriptor);else Reflect.deleteProperty(globalThis,name);}});
   const button=new Button();
-  function pointer(type:string,pointerType:string) {
+  function pointer(type:string,pointerType:string,element=button) {
     const event=new Event(type);
-    Object.defineProperties(event,{target:{value:button},pointerId:{value:1},button:{value:0},pointerType:{value:pointerType}});
+    Object.defineProperties(event,{target:{value:element},pointerId:{value:1},button:{value:0},pointerType:{value:pointerType}});
     document.dispatchEvent(event);
   }
   pointer("pointerdown","mouse");pointer("pointerup","mouse");
@@ -32,6 +34,12 @@ test("shared feedback handles touch activation and automatic previews, and honor
   pointer("pointerdown","touch");pointer("pointerup","touch");
   const touchPeak=Number(String(button.animations.at(-1)!.frames[1].scale).split(" ")[1]);
   assert.ok(touchPeak>mousePeak,"Touch did not get a stronger bounce");
+  const cell=new Button(),door=new Button(),greeting=new Button();door.isDoor=true;door.cell=cell;
+  pointer("pointerdown","mouse",door);pointer("pointerup","mouse",door);
+  assert.equal(door.animations.length,0,"The door moved separately from its attached greeting control");
+  assert.equal(cell.animations.length,2,"The complete door cell did not receive the press and bounce");
+  pointer("pointerdown","mouse",greeting);pointer("pointerup","mouse",greeting);
+  assert.equal(greeting.animations.length,2,"The small greeting button lost its own feedback");
   const root=new Button(),choice=new Button();root.children=[button,choice];
   coarse=true;
   previewGlassFeedback(root as unknown as HTMLElement);

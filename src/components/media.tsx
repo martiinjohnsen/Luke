@@ -33,7 +33,7 @@ export function MediaImage({src,alt,...props}: Omit<ImgHTMLAttributes<HTMLImageE
   const media=useMedia(src);
   return media.url ? <img {...props} src={media.url} alt={alt} /> : <p className="media-placeholder" role="status">{media.error || "Henter bildet …"}</p>;
 }
-export function AudioPlayer({src,label="Lydhilsen"}:{src:string;label?:string}) {
+export function AudioPlayer({src,label="Lydhilsen",compact=false}:{src:string;label?:string;compact?:boolean}) {
   const media=useMedia(src);
-  return <div className="audio-player"><span>{label}</span>{media.url ? <audio controls preload="metadata" src={media.url} aria-label={label} /> : <p className="media-placeholder" role="status">{media.error || "Henter lydhilsenen …"}</p>}</div>;
+  return <div className={`audio-player${compact ? " is-compact" : ""}`}>{!compact && <span>{label}</span>}{media.url ? <audio controls preload="metadata" src={media.url} aria-label={label} /> : <p className="media-placeholder" role="status">{media.error || "Henter lydhilsenen …"}</p>}</div>;
 }

@@ -9,11 +9,7 @@ export function GlassSettings() {
   const demo=useRef<HTMLDivElement>(null),changed=useRef(false),frame=useRef(0);
   const demonstrate=()=>{cancelAnimationFrame(frame.current);frame.current=requestAnimationFrame(()=>{if(demo.current) previewGlassFeedback(demo.current);});};
   const finish=()=>{glass.flush();if(changed.current) {changed.current=false;demonstrate();}};
-  useEffect(()=>{
-    if(!glass.ready) return;
-    const timer=setTimeout(()=>{if(demo.current) previewGlassFeedback(demo.current);},350);
-    return ()=>{clearTimeout(timer);cancelAnimationFrame(frame.current);};
-  },[glass.ready]);
+  useEffect(()=>()=>cancelAnimationFrame(frame.current),[]);
   return (
     <section className="settings-card glass-settings" aria-labelledby={`${id}-title`}>
       <div className="settings-card-heading"><span className="soft-icon"><Icon name="sparkles" size={24} /></span><div><h2 id={`${id}-title`}>Knapputseende</h2><p>Velg hvor gjennomsiktige knappene og mobilmenyen skal være.</p></div></div>

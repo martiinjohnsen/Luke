@@ -19,12 +19,14 @@ export function installGlassFeedback(readLevel:()=>number):()=>void {
     running.set(element,animation);return animation;
   }
   const target=(event:Event)=>event.target instanceof Element ? event.target.closest<HTMLElement>(selector) : null;
+  const surface=(element:HTMLElement)=>element.matches(".recipient-door") ? element.closest<HTMLElement>(".recipient-door-cell") ?? element : element;
   const reduced=()=>window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const coarse=()=>window.matchMedia("(pointer: coarse)").matches;
   function begin(event:PointerEvent|KeyboardEvent,pointer:number|null) {
     const mobile=coarse() || ("pointerType" in event && event.pointerType==="touch");
-    const element=target(event),motion=glassMotion(readLevel(),mobile);
-    if(!element || typeof element.animate!=="function" || reduced() || !motion.strength || element.getAttribute("aria-disabled")==="true") return;
+    const control=target(event),motion=glassMotion(readLevel(),mobile);
+    if(!control || reduced() || !motion.strength || control.getAttribute("aria-disabled")==="true") return;
+    const element=surface(control);if(typeof element.animate!=="function") return;
     cancel();running.get(element)?.cancel();
     held={element,pointer,mobile,animation:animate(element,[{scale:"1 1"},{scale:`${motion.pressX} ${motion.pressY}`}],125)};
   }
@@ -40,7 +42,7 @@ export function installGlassFeedback(readLevel:()=>number):()=>void {
   const up=(event:PointerEvent)=>{if(held?.pointer===event.pointerId){const {element,mobile}=held;held=null;lastRelease=performance.now();pop(element,mobile);}};
   const keyDown=(event:KeyboardEvent)=>{if(!event.repeat && (event.key==="Enter" || event.key===" ") && target(event)===document.activeElement) begin(event,null);};
   const keyUp=(event:KeyboardEvent)=>{if(held?.pointer===null && (event.key==="Enter" || event.key===" ")){const {element,mobile}=held;held=null;lastRelease=performance.now();pop(element,mobile);}};
-  const click=(event:MouseEvent)=>{if(event.detail===0 && !held && performance.now()-lastRelease>90){const element=target(event);if(element) pop(element);}};
+  const click=(event:MouseEvent)=>{if(event.detail===0 && !held && performance.now()-lastRelease>90){const element=target(event);if(element) pop(surface(element));}};
   const demonstrate=(event:Event)=>{
     const root=(event as CustomEvent<HTMLElement>).detail;
     if(!(root instanceof HTMLElement) || !root.isConnected || reduced()) return;

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { sameGreeting, temporaryGreeting } from "../src/lib/greetings.ts";
+import { sameGreeting, temporaryGreeting, greetingsForCalendar } from "../src/lib/greetings.ts";
 
 test("a temporary trial offers once, can be edited and keeps the saved revision until content changes",()=>{
   const claimed=temporaryGreeting([],"calendar",1,"owner","test");
@@ -14,6 +14,17 @@ test("a temporary trial offers once, can be edited and keeps the saved revision 
   assert.equal(edited[0].revision,2);
   assert.throws(()=>temporaryGreeting(edited,"calendar",1,"owner","test",{body:"Gammelt",image:null,audio:null},1),/endret/);
   assert.equal(sent[0].body,"Takk!","An edit mutated a previous snapshot");
+});
+test("the inbox follows door numbers after edits, excludes other calendars and keeps provider snapshots unchanged",()=>{
+  const make=(day:number,body:string)=>temporaryGreeting([],"calendar",day,"owner","test",{body,image:null,audio:null})[0];
+  const second=make(2,"Second"),first=make(1,"First"),fourth=make(4,"Fourth");
+  first.updatedAt="2100-01-01T00:00:00Z";
+  const other={...make(3,"Other calendar"),calendarId:"another"};
+  const received={...make(3,"Recipient copy"),owner:false};
+  const unsent=temporaryGreeting([],"calendar",3,"owner","test")[0];
+  const input=[second,fourth,first,other,received,unsent],before=structuredClone(input);
+  assert.deepEqual(greetingsForCalendar(input,"calendar").map(item=>item.day),[1,2,4]);
+  assert.deepEqual(input,before);
 });
 test("trial modes, accounts and days stay separate and cannot match a real recipient greeting",()=>{
   let items=temporaryGreeting([],"calendar",1,"owner","test");

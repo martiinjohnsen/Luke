@@ -7,7 +7,7 @@ import { authMessage } from "@/lib/cloud/client";
 import { useAccount } from "./account-provider";
 import { useStore } from "./provider";
 import { useGreetings, type Greeting, type PreviewGreeting } from "./greetings-provider";
-import { sameGreeting } from "@/lib/greetings";
+import { sameGreeting, greetingsForCalendar } from "@/lib/greetings";
 import { Dialog } from "./dialog";
 import { Icon } from "./icons";
 import { AudioInput } from "./audio-input";
@@ -29,11 +29,12 @@ function GreetingForm({calendarId,day,userId,record,onClose,preview}:{calendarId
   const formId=useId();
   const initial=()=>({body:record?.body ?? "",image:record?.image ?? null,audio:record?.audio ?? null});
   const [draft,setDraft]=useState(initial),[revision,setRevision]=useState(record?.revision ?? 0),[busy,setBusy]=useState(false),[audioBusy,setAudioBusy]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState("");
+  const [audioAdded,setAudioAdded]=useState(!!record?.audio);
   const baseline=useRef(JSON.stringify(initial())),alive=useRef(true),uploadToken=useRef(0);
   const dirty=JSON.stringify(draft)!==baseline.current;
   const changedElsewhere=!!record && record.revision!==revision;
   useEffect(()=>{alive.current=true;return ()=>{alive.current=false;uploadToken.current++;};},[]);
-  function reload() {const next=initial();setDraft(next);baseline.current=JSON.stringify(next);setRevision(record?.revision ?? 0);setError("");}
+  function reload() {const next=initial();setDraft(next);setAudioAdded(!!next.audio);baseline.current=JSON.stringify(next);setRevision(record?.revision ?? 0);setError("");}
   useEffect(()=>{if(!dirty && !busy && !audioBusy && changedElsewhere) reload();},[record?.revision,dirty,busy,audioBusy]);
   useEffect(()=>{const warn=(event:BeforeUnloadEvent)=>{if(dirty || busy || audioBusy || saving) event.preventDefault();};window.addEventListener("beforeunload",warn);return ()=>window.removeEventListener("beforeunload",warn);},[dirty,busy,audioBusy,saving]);
   async function image(file?:File) {
@@ -51,12 +52,16 @@ function GreetingForm({calendarId,day,userId,record,onClose,preview}:{calendarId
     catch(error){if(alive.current) {setError(authMessage(error));void greetings.refresh();}}
     finally{if(alive.current) setSaving(false);}
   }}>
-    <p className="greeting-intro">En liten takk, et bilde eller noen ord med stemmen din. Du kan komme tilbake og endre hilsenen senere.</p>
-    {preview && <p className="greeting-trial-note">Dette er en prøvehilsen til deg selv. {preview.save ? "Den lagres sammen med prøvefremdriften din." : "Den vises i redigeringen mens du tester. Slå på Lagre fremdrift før du sender for å beholde den på kontoen."}</p>}
-    <label>Din hilsen<textarea rows={4} maxLength={3000} placeholder="Tusen takk for dagens luke …" value={draft.body} onChange={event=>setDraft({...draft,body:event.target.value})}/></label>
+    <label>Din hilsen<textarea rows={3} maxLength={3000} placeholder="Tusen takk for dagens luke …" value={draft.body} onChange={event=>setDraft({...draft,body:event.target.value})}/></label>
     {draft.image && <div className="greeting-image"><MediaImage src={draft.image} alt="Bildet i hilsenen din"/><button type="button" className="icon-button" aria-label="Fjern bildet" disabled={blocked} onClick={()=>setDraft({...draft,image:null})}><Icon name="trash" size={16}/></button></div>}
-    <label className="button secondary small-button"><Icon name="image" size={16}/>{busy ? "Lagrer bildet …" : draft.image ? "Bytt bilde" : "Legg til bilde"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={blocked} onChange={event=>{void image(event.target.files?.[0]);event.target.value="";}}/></label>
-    <AudioInput value={draft.audio ?? undefined} context={{userId,calendarId,day,scope:preview ? "door" : "reply"}} onBusyChange={setAudioBusy} onChange={audio=>setDraft(previous=>({...previous,audio:audio || null}))}/>
+    <div className="greeting-attachment-actions">
+      <label className="button secondary small-button"><Icon name="image" size={16}/>{busy ? "Lagrer bildet …" : draft.image ? "Bytt bilde" : "Legg til bilde"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={blocked} onChange={event=>{void image(event.target.files?.[0]);event.target.value="";}}/></label>
+      {!audioAdded && !draft.audio && <button type="button" className="button secondary small-button" disabled={blocked} onClick={()=>setAudioAdded(true)}><Icon name="mic" size={16}/>Legg til lyd</button>}
+    </div>
+    {(audioAdded || draft.audio) && <section className="content-block greeting-audio" data-block="audio" aria-label="Lydhilsen">
+      <header className="content-block-header"><h3>Lydhilsen</h3><button type="button" className="block-remove" aria-label="Fjern lydhilsen" disabled={blocked} onClick={()=>{setAudioAdded(false);setDraft(previous=>({...previous,audio:null}));}}><Icon name="trash" size={16}/><span>Fjern</span></button></header>
+      <div className="content-block-body"><AudioInput value={draft.audio ?? undefined} context={{userId,calendarId,day,scope:preview ? "door" : "reply"}} disabled={busy || saving} onBusyChange={setAudioBusy} onChange={audio=>setDraft(previous=>({...previous,audio:audio || null}))}/></div>
+    </section>}
     {changedElsewhere && <div className="form-error" role="alert">Hilsenen er endret på en annen enhet. Utkastet ditt er beholdt.<button type="button" className="button secondary small-button" onClick={reload}>Hent nyeste hilsen</button></div>}
     {error && <p className="form-error" role="alert">{error}</p>}
   </form></Dialog>;
@@ -64,7 +69,7 @@ function GreetingForm({calendarId,day,userId,record,onClose,preview}:{calendarId
 export function GreetingInbox({calendarId}:{calendarId:string}) {
   const greetings=useGreetings();
   const [open,setOpen]=useState(false),[error,setError]=useState(""),[visibleCount,setVisibleCount]=useState(12);
-  const items=greetings.items.filter(item=>item.calendarId===calendarId && item.owner && item.revision>0);
+  const items=greetingsForCalendar(greetings.items,calendarId);
   const unread=items.filter(item=>item.revision>item.seenRevision);
   const visible=items.slice(0,visibleCount);
   const visibleUnread=visible.filter(item=>item.revision>item.seenRevision);
@@ -76,8 +81,7 @@ export function GreetingInbox({calendarId}:{calendarId:string}) {
     {open && <div className="greeting-inbox-content">
       {(error || greetings.error) && <p className="form-error" role="alert">{error || greetings.error}</p>}
       {!items.length ? <p className="field-help">Hilsener fra mottakeren og dine egne prøvehilsener dukker opp her.</p> : visible.map(item=><article className="greeting-message" key={`${item.userId}:${item.day}:${item.previewMode ?? "recipient"}:${item.temporary ?? false}`}>
-        <header><strong>{item.previewMode ? "Prøvehilsen fra deg" : item.name}</strong><span>{item.day}. desember</span><time dateTime={item.updatedAt}>{new Date(item.updatedAt).toLocaleDateString("nb-NO",{day:"numeric",month:"short"})}</time></header>
-        {item.previewMode && <p className="greeting-trial-note">{item.temporary ? "Midlertidig prøve" : "Lagret prøve"}{item.previewMode==="date" ? " · Følger kalenderdato" : " · Alle luker åpne"}</p>}
+        <header><strong>{item.previewMode ? "Prøvehilsen fra deg" : `Hilsen fra ${item.name}`}</strong><span>{item.day}. desember</span><time dateTime={item.updatedAt}>{new Date(item.updatedAt).toLocaleDateString("nb-NO",{day:"numeric",month:"short"})}</time></header>
         {item.body && <p>{item.body}</p>}{item.image && <MediaImage src={item.image} alt={`Et bilde fra ${item.name}`} loading="lazy"/>}{item.audio && <AudioPlayer src={item.audio} label={`Lydhilsen fra ${item.name}`}/>}
       </article>)}
       {items.length>visibleCount && <button type="button" className="button secondary" onClick={()=>setVisibleCount(visibleCount+12)}>Vis flere hilsener</button>}
