@@ -1,5 +1,5 @@
 /* Cache only the public shell. Account data never enters the service-worker cache. */
-const CACHE = "luke-shell-2026-11-08-invitation-groups-v20";
+const CACHE = "luke-shell-2026-11-08-desktop-door-check-v21";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {

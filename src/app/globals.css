@@ -9402,6 +9402,10 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .recipient-door-cell > .recipient-door { padding: 0; }
 .recipient-door-cell > .recipient-door > strong { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; }
 .recipient-door-cell > .recipient-door > .door-status { position: absolute; top: calc(50% + 28px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; }
+/* Keep the opened check above the centered number on desktop. */
+@media (min-width: 761px) {
+  .recipient-door-cell > .recipient-door.opened > .door-status { top: calc(50% - 46px); height: 16px; line-height: 1; }
+}
 @media (max-width: 379px) { .door-greeting-shortcut > svg { display: none; } }
 @media (prefers-reduced-motion: reduce) { .recipient-door-cell { transition: none; } }
 
