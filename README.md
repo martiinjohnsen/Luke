@@ -25,7 +25,11 @@ Google-innlogging krever ingen SMTP-tjeneste eller eget domene. Google må være
 
 ## Deling
 
-Innlogget eier kan opprette en tilfeldig delingslenke. Mottakeren logger inn og får lesetilgang, med sin egen fremdrift og quizsvar. Delingslenken inneholder en invitasjon i URL-fragmentet, ikke kalenderinnholdet.
+Del-dialogen viser opprettede invitasjoner, også før mottakeren har åpnet kalenderen. «Del kalenderen» åpner en egen dialog med Enkeltperson eller Gruppe, e-postadresser og valgfri hilsen. «Del» oppretter invitasjonen og åpner e-postappen med ferdig utkast. Brukeren sender der; appen kan ikke bekrefte levering. Gruppen bruker blindkopi og én felles tilfeldig lenke med en serverkontrollert liste over tillatte adresser, opptil 50 personer. Bare bekreftede kontoer med riktig e-postadresse kan hente kalenderen. Adresser og invitasjonslisten er bare synlige for eieren.
+
+«Fjern tilgang» under Personer med kalenderen fjerner bare medlemskapet. Invitasjonen kan fortsatt brukes. «Trekk tilbake invitasjonen» under Deling fjerner adressens invitasjoner og medlemskap og stopper også gjeninnmelding gjennom eldre lenker. Andre i en gruppe beholder sin tilgang. Å stoppe deling avslutter alle lenker og medlemskap. Ingen av disse handlingene sletter fremdrift eller quizforsøk. En uttrykkelig ny invitasjon kan gi tilgang igjen med samme fremdrift.
+
+Innlogget mottaker får fornyet økten uten ny Google-velger og venter på en fersk kalenderoversikt før navigering. Ved feil kan samme konto prøve igjen. Kontobindingen kontrolleres før og etter fornying. Invitasjonen ligger i URL-fragmentet, ikke kalenderinnholdet.
 
 Kalenderdokumentet er bare direkte lesbart for eieren. Mottakerdata hentes gjennom databasefunksjoner som holder tilbake fremtidige luker etter norsk tid. Quizfasit og avsenderkommentar følger først med etter at mottakeren har sendt et svar. Første svar på samme spørsmålsversjon beholdes. Endres spørsmålet, får det en ny nøkkel.
 
@@ -48,7 +52,7 @@ Mine kalendere har søk, sortering og filtrene Alle, Laget av meg og Delt med me
 
 Ni fargepaletter og seks motiver kan kombineres med gjenstander, snøfall, bris og stjerneblinking. Redigeringen bruker appens lilla stil; mottakerkalenderen følger valgt tema. Datolåsen har lenke og lås, og lukene åpnes med en døranimasjon. Redusert bevegelse respekteres. PWA kan legges på hjemskjermen.
 
-Gavekortkjøp, kontroll av saldo og leverandørintegrasjon er ikke implementert. Bilder komprimeres lokalt og lagres med dokumentet; samlet arbeidsområde er begrenset til 15 MB i klienten. YouTube kontaktes først ved avspilling.
+Gavekortkjøp, kontroll av saldo og leverandørintegrasjon er ikke implementert. Bilder komprimeres lokalt. Bilder og lyd på kontokalendere lagres privat hos Supabase med tilgangskontrollerte referanser i dokumentet. YouTube kontaktes først ved avspilling.
 
 ## Kontroller
 
@@ -74,7 +78,7 @@ I VS Code kan **Sync Changes** hente nye commits. Egne filendringer må først l
 | src/components/account-provider.tsx | Innlogget bruker og gjenoppretting            |
 | src/components/provider.tsx         | Lokal lagring, konto og synkronisering        |
 | src/lib/cloud/workspace.ts          | Endringssett, revisjoner og utkast            |
-| src/components/share-dialog.tsx     | Delingslenke og tilbakekalling                |
+| src/components/share-dialog.tsx     | Invitasjoner, gruppedeling og tilbakekalling                |
 | src/app/receive/page.tsx            | Mottak av invitasjon og eldre prøvelenker     |
 | src/components/recipient-view.tsx   | Luker, fremdrift og mottakerquiz              |
 | supabase/migrations                 | Versjonert databaseoppsett                    |

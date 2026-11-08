@@ -45,7 +45,7 @@ export function OwnerParticipants({calendar,onOpenDoor,source}:{calendar:AdventC
   const people=data?.participants ?? [],person=people.find(p=>p.id===selected);
   const activeFilter=people.some(p=>p.id===filter) ? filter : "all";
   async function remove(p:Participant) {
-    if(!user || removing || !window.confirm(`Fjerne tilgangen til ${p.name}? Fremdrift og quizforsøk beholdes dersom personen får kalenderen igjen.`)) return;
+    if(!user || removing || !window.confirm(`Fjerne tilgangen til ${p.name}? Invitasjonen virker fortsatt, så personen kan legge kalenderen til igjen. Fremdrift og quizforsøk beholdes.`)) return;
     setRemoving(p.id);setFailure('');
     try {const {error}=await rpcForUser(user.id,'remove_luke_participant',{p_calendar_id:calendar.id,p_user_id:p.id});if(error) throw error;
       if(selected===p.id) setSelected(null);await refresh();store.toast(`Tilgangen til ${p.name} er fjernet.`);
@@ -68,6 +68,6 @@ export function OwnerParticipants({calendar,onOpenDoor,source}:{calendar:AdventC
         </ul>
       </>}
     </div>}
-    {person && data && <CalendarOverview calendar={calendar} opened={person.opened} available={data.available} summary={person.summary} onClose={()=>setSelected(null)} onOpenDoor={day=>{setSelected(null);onOpenDoor(day);}} leaderboard={<QuizLeaderboard people={people}/>} controls={<label className="participant-select">Mottaker<select value={person.id} onChange={event=>setSelected(event.target.value)}>{people.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>}/>}
+    {person && data && <CalendarOverview calendar={calendar} opened={person.opened} available={data.available} summary={person.summary} onClose={()=>setSelected(null)} onOpenDoor={day=>{setSelected(null);onOpenDoor(day);}} leaderboard={<QuizLeaderboard people={people}/>}/>}
   </section>;
 }

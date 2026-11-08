@@ -1,4 +1,5 @@
 export const DEFAULT_GLASS = 60;
+export const GUEST_GLASS = 52;
 export function glassLevel(value: unknown): number {
   return typeof value === "number" && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : DEFAULT_GLASS;
 }

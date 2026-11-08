@@ -54,3 +54,15 @@ Når e-post er koblet til: test registrering, bekreftelse, ny bekreftelse, innlo
 - Lokal Chrome med produksjonsbygg: gjestesiden viser forside og inspirasjon uten private kalenderkort, søk eller tomme filtre. Opprett kalender sendte til `/settings?next=create` med forklaringen om innlogging, uten å åpne opprettingsdialogen.
 - Resend Domains viste ingen domener. SMTP og e-postlevering er ikke aktivert. Registreringsknappen, ny bekreftelse og passordlenker er derfor sperret med en synlig forklaring til avsenderen er klar.
 - Etter innlogging skal Opprett kalender fortsette automatisk. Hele innloggingsforløpet og mobilvisningen må fortsatt kontrolleres med faktiske kontoer når e-posttjenesten er koblet til.
+
+
+## Invitasjoner og eksisterende innlogging
+
+- Åpne en invitasjon mens riktig konto allerede er innlogget. Kalenderen skal hentes før mottakervisningen åpnes, også når en bakgrunnsoppdatering allerede pågår. Ved nettverksfeil skal «Prøv igjen med denne kontoen» beholde kontoen og invitasjonen.
+- Åpne med feil konto. Kontoens e-post skal vises, og invitasjonen skal fortsatt avvises til riktig Google-konto velges.
+- Åpne Del: ingen e-postfelt i første dialog. Del kalenderen skal åpne separat valg av enkeltperson eller gruppe. Gruppe krever minst to ulike adresser. Del skal åpne e-postutkastet uten kopieringsmenyer. Bekreft mottakere/blindkopi, hilsen og lenke i den faktiske e-postappen før utsending.
+- Invitasjonslisten skal inkludere adresser som ennå ikke har åpnet kalenderen, men mottakerlisten skal bare inkludere aktuelle medlemskap.
+- Fjern én person fra kalenderen. Invitasjonen skal virke igjen og beholde åpnede luker og første quizforsøk.
+- Trekk tilbake invitasjonen for én gruppeadresse. Alle personens invitasjoner og tilgang skal stoppe. De andre i gruppen skal fortsatt kunne åpne. En forsinket gjentakelse av opprettelsen skal ikke legge den fjernede adressen tilbake.
+- Inviter den samme adressen på nytt. Fremdrift og første feilaktige quizsvar skal fortsatt gjelde. En gammel, tilbakekalt personinvitasjon eller gruppetilhørighet skal fortsatt være ugyldig.
+- På mobil skal bare åpnede luker ha tall høyere opp, og hilsenknappen skal ligge innenfor luka. På PC skal tallene være sentrert. Kontroller at oversiktsknappene ikke blinker ved musebevegelse, særlig i Safari.

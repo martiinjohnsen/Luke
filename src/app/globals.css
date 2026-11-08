@@ -15,20 +15,20 @@
   --serif: Georgia, "Times New Roman", serif;
   --control-accent: #aa8ac1;
   --control-ink: #442b52;
-  --glass-action-fill: 80%;
-  --glass-choice-fill: 45%;
-  --glass-neutral-fill: 42%;
-  --glass-nav-fill: 32%;
-  --glass-shine: 28%;
-  --glass-blur: 20px;
-  --glass-nav-blur: 20px;
-  --glass-nav-shine: 28%;
-  --glass-reflection: 18%;
-  --glass-edge-light: 40%;
-  --glass-choice-tint: 32%;
-  --glass-choice-hover-tint: 40%;
-  --glass-choice-pressed-tint: 46%;
-  --glass-help-mix: 35%;
+  --glass-action-fill: 74.9%;
+  --glass-choice-fill: 40.6%;
+  --glass-neutral-fill: 36.9%;
+  --glass-nav-fill: 27.8%;
+  --glass-shine: 25.3%;
+  --glass-blur: 18.9px;
+  --glass-nav-blur: 17.5px;
+  --glass-nav-shine: 24.3%;
+  --glass-reflection: 21.6%;
+  --glass-edge-light: 44.5%;
+  --glass-choice-tint: 38.4%;
+  --glass-choice-hover-tint: 46.1%;
+  --glass-choice-pressed-tint: 52.1%;
+  --glass-help-mix: 43.7%;
   --control-sheen: linear-gradient(165deg, color-mix(in srgb, white var(--glass-reflection), transparent), transparent 16% 80%, color-mix(in srgb, white var(--glass-reflection), transparent)), linear-gradient(135deg, color-mix(in srgb, white var(--glass-shine), transparent), #ffffff06);
   --neutral-fill: color-mix(in srgb, white var(--glass-neutral-fill), transparent);
   --neutral-hover: color-mix(in srgb, var(--neutral-fill) 85%, #c8b3d5);
@@ -9399,7 +9399,9 @@ input[type="radio"] {
 }
 @media (max-width: 460px) { .recipient-door-cell { aspect-ratio: .74; } }
 label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offset: 4px; }
-.recipient-door-cell:has(.door-greeting-shortcut) > .recipient-door { padding-bottom: 38px; }
+.recipient-door-cell > .recipient-door { padding: 0; }
+.recipient-door-cell > .recipient-door > strong { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; }
+.recipient-door-cell > .recipient-door > .door-status { position: absolute; top: calc(50% + 28px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; }
 @media (max-width: 379px) { .door-greeting-shortcut > svg { display: none; } }
 @media (prefers-reduced-motion: reduce) { .recipient-door-cell { transition: none; } }
 
@@ -9432,7 +9434,7 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .participant-list strong { font-size: 13px; overflow-wrap: anywhere; }
 .participant-list span { color: var(--muted); font-size: 11px; }
 .participant-list .icon-button { width: 34px; min-height: 34px; height: 34px; flex-shrink: 0; }
-.participant-select,.greeting-sender-filter { display: grid; gap: 6px; margin-bottom: 8px; font-size: 12px; color: var(--muted); max-width: 350px; }
+.greeting-sender-filter { display: grid; gap: 6px; margin-bottom: 8px; font-size: 12px; color: var(--muted); max-width: 350px; }
 .quiz-leaderboard { margin: 0 0 20px; }
 .quiz-leaderboard h3 { margin: 0 0 12px; font: 600 15px/1.4 var(--font); }
 .quiz-leaderboard ol { display: grid; gap: 7px; list-style: none; padding: 0; margin: 0; }
@@ -9453,14 +9455,14 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
   .content-block-header { gap: 5px; }
   .block-position { width: 14px; }
 }
-/* Reserve a small footer for the greeting without pushing an opened number up. */
+/* Only opened mobile doors lift their number to leave room for the greeting. */
 @media (max-width: 760px) {
   .recipient-door-grid { gap: 10px; }
   .recipient-door-cell { aspect-ratio: .92; min-height: 96px; }
   .recipient-door-cell > .recipient-door,
   .recipient-door-cell:has(.door-greeting-shortcut) > .recipient-door { aspect-ratio: auto; padding: 0; }
-  .recipient-door-cell > .recipient-door > strong { position: absolute; top: 43%; left: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 33px; line-height: 1; }
-  .recipient-door-cell > .recipient-door > .door-status { position: absolute; top: calc(43% + 13px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; height: 10px; line-height: 1; }
+  .recipient-door-cell > .recipient-door > strong { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); margin: 0; font-size: 33px; line-height: 1; }
+  .recipient-door-cell > .recipient-door > .door-status { position: absolute; top: calc(50% + 22px); left: 50%; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; height: 10px; line-height: 1; }
   .recipient-door .door-status > svg { width: 10px; height: 10px; }
   .recipient-door-cell > .door-greeting-shortcut { bottom: 8px; min-height: 22px; padding: 2px 5px; border-radius: 8px; max-width: calc(100% - 12px); font-size: 8px; gap: 3px; }
   .recipient-door-cell > .door-greeting-shortcut > svg { width: 10px; height: 10px; }
@@ -9507,9 +9509,6 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .greeting-message-grid .audio-timeline { grid-column: 1 / -1; grid-row: 2; height: 20px; }
 .personal-share-form { display: grid; gap: 16px; }
 .personal-share-form > label { display: grid; gap: 7px; font-size: 12px; color: var(--primary); }
-.prepared-invitation { display: grid; gap: 10px; margin: 18px 0; }
-.prepared-invitation > p { margin: 0; overflow-wrap: anywhere; }
-.prepared-invitation details > textarea { margin-top: 8px; width: 100%; }
 .share-recipient-note { line-height: 1.7; }
 .install-guide .info-box > .button { margin-top: 14px; }
 @media(max-width:1150px) {
@@ -9524,10 +9523,33 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
   .participant-list .participant-email { font-size: 9px; }
   .participant-progress { font-size: 10px; }
   .participant-list > li > .button { font-size: 10px; }
-  .recipient-door-cell > .recipient-door > strong { top: 36%; }
-  .recipient-door-cell > .recipient-door > .door-status { top: calc(36% + 13px); }
-  .recipient-door-cell > .door-greeting-shortcut { bottom: 14px; }
+  .recipient-door-cell > .recipient-door.opened > strong { top: 33%; }
+  .recipient-door-cell > .recipient-door.opened > .door-status { top: calc(33% + 13px); }
+  .recipient-door-cell > .door-greeting-shortcut { bottom: 17px; }
 }
 @media(max-width:359px) {
   .participant-list,.greeting-message-grid { grid-template-columns: 1fr; }
 }
+
+/* A stable translucent surface avoids repainting a full-width backdrop on hover. */
+.participants-toggle, .greeting-inbox-toggle {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: inset 0 1px 1px color-mix(in srgb, white var(--glass-edge-light), transparent), inset 0 -1px 1px #69487d14;
+}
+.participants-toggle:hover, .greeting-inbox-toggle:hover { transform: none; box-shadow: inset 0 1px 1px color-mix(in srgb, white var(--glass-edge-light), transparent), inset 0 -1px 1px #69487d14; }
+.invitation-composer { padding: 24px; }
+.sharing-kind { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.sharing-kind > .button { flex-direction: column; min-height: 82px; gap: 9px; }
+.sharing-kind > .button[aria-pressed=true] { background-color: color-mix(in srgb, var(--control-accent) var(--glass-choice-fill), transparent); border-color: #a68ab9; }
+.invitation-composer .field-help { margin: 0; }
+.invitation-list-section { margin: 22px 0; }
+.invitation-list-section h4 { display: flex; gap: 8px; align-items: center; font-size: 13px; margin: 0 0 12px; }
+.invitation-list-section h4 > span { color: var(--muted); font-weight: 400; }
+.invitation-list { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.invitation-list > li { display: flex; align-items: center; gap: 10px; padding: 11px; border: 1px solid var(--line); border-radius: 13px; }
+.invitation-list > li > div { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.invitation-list strong { font-size: 12px; overflow-wrap: anywhere; }
+.invitation-list span { color: var(--muted); font-size: 11px; }
+.invitation-list .icon-button { flex-shrink: 0; width: 34px; height: 34px; min-height: 34px; }
+@media(max-width:760px) { .invitation-composer { padding: 18px; } }

@@ -1,6 +1,7 @@
 "use client";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { publicCloudConfig } from "./public-config";
+import { renewedSession } from "./session";
 let client: SupabaseClient | null = null;
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL || publicCloudConfig.url;
 const publishableKey =
@@ -27,8 +28,10 @@ export async function rpcForUser(
   const scoped = await clientForUser(userId);
   return scoped.rpc(name, args);
 }
-export async function clientForUser(userId: string | null): Promise<SupabaseClient> {
-  const { data, error } = await supabase().auth.getSession();
+export async function clientForUser(userId: string | null, renew = false): Promise<SupabaseClient> {
+  const { data, error } = renew
+    ? { data: { session: await renewedSession(userId, supabase().auth) }, error: null }
+    : await supabase().auth.getSession();
   if (error) throw error;
   if (!userId || !data.session || data.session.user.id !== userId)
     throw new Error("Innloggingen har endret seg. Åpne siden på nytt.");

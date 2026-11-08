@@ -11,7 +11,7 @@ import { BrandLogo } from "@/components/brand";
 import { useStore } from "@/components/provider";
 import { useAccount } from "@/components/account-provider";
 import { inviteToken } from "@/lib/cloud/workspace";
-import { rpcForUser, authMessage, supabase } from "@/lib/cloud/client";
+import { clientForUser, authMessage, supabase } from "@/lib/cloud/client";
 export default function ReceivePage() {
   const [hash, setHash] = useState<string | null>(null);
   useEffect(() => {
@@ -33,7 +33,7 @@ function LinkedReceive({ token }: { token: string }) {
   const account = useAccount(),
     store = useStore(),
     router = useRouter();
-  const [error, setError] = useState(""),[switching,setSwitching]=useState(false);
+  const [error, setError] = useState(""),[switching,setSwitching]=useState(false),[retry,setRetry]=useState(0);
   async function chooseAccount() {
     setSwitching(true);
     try {
@@ -55,9 +55,10 @@ function LinkedReceive({ token }: { token: string }) {
     setError("");
     let active = true;
     void (async () => {
+      const scoped = await clientForUser(account.user!.id, true);
       await store.syncNow();
-      const { data, error } = await rpcForUser(
-        account.user?.id ?? null,
+      if (!active) return;
+      const { data, error } = await scoped.rpc(
         "accept_luke_invite",
         {
           p_token: token,
@@ -68,7 +69,7 @@ function LinkedReceive({ token }: { token: string }) {
       try {
         localStorage.removeItem("luke:pending-invite");
       } catch {}
-      await store.refresh();
+      await store.refresh(true);
       if (active) router.replace(`/calendar/${data}/preview`);
     })().catch((error) => {
       if (active) {
@@ -81,7 +82,7 @@ function LinkedReceive({ token }: { token: string }) {
     return () => {
       active = false;
     };
-  }, [account.user?.id, token, router, store.refresh, store.syncNow]);
+  }, [account.user?.id, token, router, store.refresh, store.syncNow, retry]);
   return (
     <main className="receive-invitation">
       <div className="settings-card invitation-card">
@@ -107,7 +108,9 @@ function LinkedReceive({ token }: { token: string }) {
             <Icon name="user" size={18} />
           </Link>
         )}
-        {error && account.user && <button type="button" className="button primary full" disabled={switching} onClick={()=>void chooseAccount()}><Icon name="user" size={17}/>{switching ? "Åpner Google …" : "Velg en annen Google-konto"}</button>}
+        {account.user && <p className="field-help">Innlogget som {account.user.email}</p>}
+        {error && account.user && <button type="button" className="button primary full" disabled={switching} onClick={()=>setRetry(value=>value+1)}>Prøv igjen med denne kontoen</button>}
+        {error && account.user && <button type="button" className="button secondary full" disabled={switching} onClick={()=>void chooseAccount()}><Icon name="user" size={17}/>{switching ? "Åpner Google …" : "Velg en annen Google-konto"}</button>}
         {error && !account.user && <Link href="/settings" className="button primary full">Til innlogging</Link>}
         <Link href="/calendars" className="button secondary full">
           Til Mine kalendere

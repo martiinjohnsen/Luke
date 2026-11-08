@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { authMessage, rpcForUser, supabase } from "@/lib/cloud/client";
-import { DEFAULT_GLASS, glassLevel, glassStyle } from "@/lib/glass";
+import { DEFAULT_GLASS, GUEST_GLASS, glassLevel, glassStyle } from "@/lib/glass";
 import { useAccount } from "./account-provider";
 import { installGlassFeedback } from "@/lib/glass-motion";
 
@@ -17,13 +17,13 @@ export function GlassProvider({ children }: { children: ReactNode }) {
   const userId = user?.id ?? null;
   const identity = useRef(userId);
   identity.current = userId;
-  const [state, setState] = useState<{ userId: string | null; level: number; ready: boolean; status: Glass["status"]; error: string }>({ userId: null, level: DEFAULT_GLASS, ready: false, status: "loading", error: "" });
+  const [state, setState] = useState<{ userId: string | null; level: number; ready: boolean; status: Glass["status"]; error: string }>({ userId: null, level: GUEST_GLASS, ready: false, status: "loading", error: "" });
   const desired = useRef<{ userId: string; level: number } | null>(null);
   const sequence = useRef(0);
   const schedule = useRef<() => void>(() => {});
   const flush = useRef<() => void>(() => {});
   const retry = useRef<() => void>(() => {});
-  const level = state.userId === userId ? state.level : DEFAULT_GLASS;
+  const level = state.userId === userId ? state.level : userId ? DEFAULT_GLASS : GUEST_GLASS;
   const levelRef=useRef(level);levelRef.current=level;
   useEffect(()=>installGlassFeedback(()=>levelRef.current),[]);
   useEffect(() => {
@@ -32,7 +32,7 @@ export function GlassProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     desired.current = null;
     if (!userId) {
-      setState({ userId: null, level: DEFAULT_GLASS, ready: false, status: "saved", error: "" });
+      setState({ userId: null, level: GUEST_GLASS, ready: false, status: "saved", error: "" });
       schedule.current = flush.current = retry.current = () => {};
       return;
     }

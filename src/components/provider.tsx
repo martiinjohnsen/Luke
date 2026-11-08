@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -32,6 +33,7 @@ import {
   type CloudProgress,
 } from "@/lib/cloud/workspace";
 import { useAccount } from "./account-provider";
+import { workspaceRefresher } from "@/lib/cloud/workspace-refresh";
 import { needsMediaMigration, prepareWorkspaceMedia, cleanUnusedMedia } from "@/lib/cloud/media";
 import { stageNewMedia, restoreStagedMedia } from "@/lib/media-workspace";
 import { Icon } from "./icons";
@@ -49,7 +51,7 @@ type Store = {
   setPreferences: (change: Partial<AppData["preferences"]>) => boolean;
   importData: (data: AppData) => boolean;
   syncNow: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: (strict?: boolean) => Promise<void>;
   useCloudVersion: () => Promise<void>;
   importLocal: () => Promise<number>;
   openDoor: (id: string, day: number) => Promise<void>;
@@ -90,7 +92,6 @@ export function Provider({ children }: { children: ReactNode }) {
     blocked = useRef(false),
     running = useRef<Promise<void> | null>(null);
   const refreshNeeded = useRef(false),
-    refreshRunning = useRef(false),
     localQueue = useRef(Promise.resolve());
   const pumpRef = useRef<() => Promise<void>>(async () => {}),
     refreshRef = useRef<() => Promise<void>>(async () => {});
@@ -115,25 +116,33 @@ export function Provider({ children }: { children: ReactNode }) {
         dirty: dirty.current,
       } satisfies CloudCache);
   }, []);
-  const refresh = useCallback(async () => {
-    if (!uid.current || !base.current) return;
-    if (dirty.current || running.current || refreshRunning.current) {
+  const refresh = useMemo(() => workspaceRefresher(async (strict) => {
+    if (!uid.current || !base.current) {
+      if (strict) throw new Error("Kontoen er ikke klar ennå. Prøv igjen.");
+      return;
+    }
+    if (dirty.current || running.current) {
       refreshNeeded.current = true;
+      if (strict) throw new Error("Utkastet ditt er beholdt. Fullfør lagringen og prøv invitasjonen igjen.");
       return;
     }
     const generation = epoch.current;
-    refreshRunning.current = true;
     try {
       const result = await fetchWorkspace(uid.current);
-      if (generation !== epoch.current) return;
+      if (generation !== epoch.current) {
+        if (strict) throw new Error("Innloggingen har endret seg. Åpne siden på nytt.");
+        return;
+      }
       if (dirty.current) {
         refreshNeeded.current = true;
+        if (strict) throw new Error("Utkastet ditt er beholdt. Fullfør lagringen og prøv invitasjonen igjen.");
         return;
       }
       base.current = result;
       show(result.data);
       setProgress(result.progress);
       await persistCloud();
+      if (generation !== epoch.current) return;
       setStatus("saved");
       setSaveError("");
     } catch (error) {
@@ -141,10 +150,9 @@ export function Provider({ children }: { children: ReactNode }) {
         setSaveError(authMessage(error));
         setStatus("error");
       }
-    } finally {
-      refreshRunning.current = false;
+      if (strict) throw error;
     }
-  }, [persistCloud]);
+  }), [persistCloud]);
   refreshRef.current = refresh;
   const syncNow = useCallback(async () => {
     if (running.current) return running.current;
