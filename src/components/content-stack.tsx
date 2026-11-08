@@ -1,15 +1,17 @@
 "use client";
 import {
   useEffect,
+  useLayoutEffect,
+  useId,
   useRef,
   useState,
   type PointerEvent,
   type ReactNode,
 } from "react";
-import { blockNames, moveDoorBlock, type DoorBlockKind } from "@/lib/model";
+import { blockNames, blockKind, moveDoorBlock, type DoorBlockId } from "@/lib/model";
 import { Icon } from "./icons";
 type Drag = {
-  block: DoorBlockKind;
+  block: DoorBlockId;
   pointer: number;
   y: number;
   target: number;
@@ -19,14 +21,20 @@ export function ContentStack({
   onOrderChange,
   onRemove,
   renderBlock,
+  revealKey=0,
 }: {
-  order: DoorBlockKind[];
-  onOrderChange: (order: DoorBlockKind[]) => void;
-  onRemove: (block: DoorBlockKind) => void;
-  renderBlock: (block: DoorBlockKind) => ReactNode;
+  revealKey?:number;
+  order: DoorBlockId[];
+  onOrderChange: (order: DoorBlockId[]) => void;
+  onRemove: (block: DoorBlockId) => void;
+  renderBlock: (block: DoorBlockId) => ReactNode;
 }) {
+  const prefix=useId();
+  const [collapsed,setCollapsed]=useState<Set<DoorBlockId>>(new Set());
+  useLayoutEffect(()=>setCollapsed(new Set()),[revealKey]);
+  useEffect(()=>{setCollapsed(previous=>{const next=new Set([...previous].filter(id=>order.includes(id)));return next.size===previous.size ? previous : next;});},[order.join("|")]);
   const root = useRef<HTMLDivElement>(null),
-    rows = useRef(new Map<DoorBlockKind, HTMLElement>()),
+    rows = useRef(new Map<DoorBlockId, HTMLElement>()),
     active = useRef<Drag | null>(null),
     orderRef = useRef(order),
     changeRef = useRef(onOrderChange),
@@ -52,11 +60,11 @@ export function ContentStack({
         ),
       );
       setAnnouncement(
-        `${blockNames[current.block]} er flyttet til plass ${current.target + 1}.`,
+        `${blockNames[blockKind(current.block)]} er flyttet til plass ${current.target + 1}.`,
       );
     }
   }
-  function start(event: PointerEvent<HTMLButtonElement>, block: DoorBlockKind) {
+  function start(event: PointerEvent<HTMLButtonElement>, block: DoorBlockId) {
     if (event.button !== 0 || orderRef.current.length < 2) return;
     event.preventDefault();
     event.currentTarget.focus({ preventScroll: true });
@@ -130,6 +138,7 @@ export function ContentStack({
       <span className="sr-only" role="status">
         {announcement}
       </span>
+      {order.length>1 && <div className="content-stack-tools"><button type="button" className="button secondary small-button" onClick={()=>setCollapsed(collapsed.size===order.length ? new Set() : new Set(order))}>{collapsed.size===order.length ? "Vis alle" : "Minimer alle"}</button></div>}
       {order.map((block, index) => (
         <section
           key={block}
@@ -137,16 +146,17 @@ export function ContentStack({
             if (element) rows.current.set(block, element);
             else rows.current.delete(block);
           }}
-          className={`content-block ${drag?.block === block ? "drag-source" : ""} ${target === block ? "drop-before" : ""}`}
-          data-block={block}
+          className={`content-block ${collapsed.has(block) ? "is-collapsed" : ""} ${drag?.block === block ? "drag-source" : ""} ${target === block ? "drop-before" : ""}`}
+          data-block={blockKind(block)} data-block-id={block}
         >
           <header className="content-block-header">
-            <h3>{blockNames[block]}</h3>
+            <h3>{blockNames[blockKind(block)]}</h3>
+            <button type="button" className="icon-button block-collapse" aria-expanded={!collapsed.has(block)} aria-controls={`${prefix}-${block}`} aria-label={`${collapsed.has(block) ? "Vis" : "Minimer"} ${blockNames[blockKind(block)].toLocaleLowerCase("nb")}`} onClick={()=>setCollapsed(previous=>{const next=new Set(previous);if(next.has(block)) next.delete(block);else next.add(block);return next;})}><Icon name="chevron" size={16} style={{rotate:collapsed.has(block) ? "0deg" : "90deg"}}/></button>
             <span className="block-position">{index + 1}</span>
             <button
               type="button"
               className="block-remove"
-              aria-label={`Fjern ${blockNames[block].toLocaleLowerCase("nb")}`}
+              aria-label={`Fjern ${blockNames[blockKind(block)].toLocaleLowerCase("nb")}`}
               onClick={() => onRemove(block)}
             >
               <Icon name="trash" size={16} />
@@ -155,7 +165,7 @@ export function ContentStack({
             <button
               type="button"
               className="block-grip"
-              aria-label={`Flytt ${blockNames[block].toLocaleLowerCase("nb")}. Dra eller bruk pil opp og ned.`}
+              aria-label={`Flytt ${blockNames[blockKind(block)].toLocaleLowerCase("nb")}. Dra eller bruk pil opp og ned.`}
               title="Dra for å endre rekkefølge. Du kan også bruke piltastene."
               disabled={order.length < 2}
               onPointerDown={(event) => start(event, block)}
@@ -177,7 +187,7 @@ export function ContentStack({
                 event.preventDefault();
                 onOrderChange(moveDoorBlock(order, index, next));
                 setAnnouncement(
-                  `${blockNames[block]} er flyttet til plass ${next + 1}.`,
+                  `${blockNames[blockKind(block)]} er flyttet til plass ${next + 1}.`,
                 );
               }}
             >
@@ -196,7 +206,7 @@ export function ContentStack({
               </svg>
             </button>
           </header>
-          <div className="content-block-body" hidden={!!drag}>
+          <div id={`${prefix}-${block}`} className="content-block-body" hidden={!!drag || collapsed.has(block)}>
             {renderBlock(block)}
           </div>
         </section>
@@ -216,7 +226,7 @@ export function ContentStack({
             }}
             aria-hidden="true"
           >
-            <strong>{blockNames[drag.block]}</strong>
+            <strong>{blockNames[blockKind(drag.block)]}</strong>
             <span>Flytt hit</span>
           </div>
         </>

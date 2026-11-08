@@ -40,7 +40,7 @@ export function questionKey(
   return `${day}-${index}-${(hash >>> 0).toString(36)}`;
 }
 export function parseQuizProgress(raw: string | null): QuizProgress {
-  if (!raw || raw.length > 400000) return {};
+  if (!raw || raw.length > 1200000) return {};
   try {
     const value: unknown = JSON.parse(raw);
     if (!value || typeof value !== "object" || Array.isArray(value)) return {};

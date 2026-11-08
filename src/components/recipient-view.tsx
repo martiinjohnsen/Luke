@@ -6,6 +6,7 @@ import {
   isDoorComplete,
   isQuestionComplete,
   doorBlockOrder,
+  blockKind,blockDoor,blockQuestionOffset,
   validQuizResponse,
   type QuizResponse,
   questionsForDoor,
@@ -21,6 +22,7 @@ import {
   type QuizProgress,
 } from "@/lib/quiz-progress";
 import { readLocalProgress, writeLocalProgress } from "@/lib/local-progress";
+import { shuffledDoors } from "@/lib/door-layout";
 import { Artwork } from "./artwork";
 import { Icon } from "./icons";
 import { BrandLogo } from "./brand";
@@ -29,6 +31,7 @@ import { useAccount } from "./account-provider";
 import { authMessage } from "@/lib/cloud/client";
 import { Dialog } from "./dialog";
 import { DoorQuizPlayer } from "./door-quiz-player";
+import { QuizLeaderboard, useParticipants } from "./calendar-participants";
 import { CalendarOverview } from "./calendar-overview";
 import { usePreviewProgress } from "./use-preview-progress";
 import { GiftCardView, VideoBlock } from "./door-content";
@@ -55,6 +58,7 @@ export function RecipientView({
   const { toast } = store;
   const account = useAccount();
   const greetings = useGreetings();
+  const participants=useParticipants(calendar.id);
   const [greetingDay,setGreetingDay] = useState<number|null>(null);
   const greetingContext=useRef<PreviewGreeting|undefined>(undefined);
   const firstVisit = useRef(false), openingRequest = useRef<Promise<void>|null>(null), interaction = useRef(0), alive = useRef(true);
@@ -334,9 +338,7 @@ export function RecipientView({
           </span>
         </div>
         <div className="recipient-door-grid">
-          {calendar.doors
-            .slice()
-            .sort((a, b) => a.day - b.day)
+          {shuffledDoors(calendar.doors,calendar.id)
             .map((door) => (
               <div className="recipient-door-cell" key={door.day}>
               <button
@@ -345,7 +347,7 @@ export function RecipientView({
                 onClick={(event) => open(door, event.currentTarget)}
               >
                 <strong>{door.day}</strong>
-                <span>
+                <span className="door-status">
                   {opened.includes(door.day) && door.day <= limit ? (
                     <Icon name="check" size={15} />
                   ) : door.day > limit ? (
@@ -397,6 +399,7 @@ export function RecipientView({
       )}{" "}
       {overviewOpen && (
         <CalendarOverview
+          leaderboard={<QuizLeaderboard people={participants.data?.participants ?? []}/>}
           calendar={calendar}
           opened={opened}
           available={limit}
@@ -523,42 +526,43 @@ function DoorViewer({
         {door.body && <p className="reveal-body">{door.body}</p>}
         <div className="revealed-blocks">
           {doorBlockOrder(door).map((block) => {
-            switch (block) {
+            const payload={...blockDoor(door,block),extra:undefined};
+            switch (blockKind(block)) {
               case "image":
-                return door.image ? (
+                return payload.image ? (
                   <figure className="reveal-figure" key={block}>
                     <MediaImage
                       className="reveal-image"
-                      src={door.image}
-                      alt={door.imageAlt || door.title || "Et bilde i kalenderen"}
+                      src={payload.image}
+                      alt={payload.imageAlt || payload.title || "Et bilde i kalenderen"}
                     />
-                    {door.imageAlt && <figcaption>{door.imageAlt}</figcaption>}
+                    {payload.imageAlt && <figcaption>{payload.imageAlt}</figcaption>}
                   </figure>
                 ) : null;
               case "giftcard":
-                return door.giftCard ? (
-                  <GiftCardView key={block} gift={door.giftCard} />
+                return payload.giftCard ? (
+                  <GiftCardView key={block} gift={payload.giftCard} />
                 ) : null;
               case "audio":
-                return door.audio ? <AudioPlayer key={block} src={door.audio}/> : null;
+                return payload.audio ? <AudioPlayer key={block} src={payload.audio}/> : null;
               case "video":
-                return youtubeId(door.videoUrl ?? "") ? (
+                return youtubeId(payload.videoUrl ?? "") ? (
                   <VideoBlock
                     key={block}
-                    url={door.videoUrl!}
-                    title={door.title}
+                    url={payload.videoUrl!}
+                    title={payload.title}
                   />
                 ) : null;
               case "link":
-                return door.link && safeLink(door.link.url) ? (
+                return payload.link && safeLink(payload.link.url) ? (
                   <a
                     key={block}
                     className="button secondary reveal-link"
-                    href={safeLink(door.link.url)!}
+                    href={safeLink(payload.link.url)!}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {door.link.label || "Åpne lenken"}
+                    {payload.link.label || "Åpne lenken"}
                     <Icon name="external" size={16} />
                   </a>
                 ) : null;
@@ -566,17 +570,18 @@ function DoorViewer({
                 return (
                   <DoorQuizPlayer
                     key={block}
-                    door={door}
+                    door={payload}
+                    offset={blockQuestionOffset(door,block,calendar)}
                     calendar={calendar}
                     answers={answers}
                     onAnswer={onAnswer}
                   />
                 );
               case "activity":
-                return door.activity ? (
+                return payload.activity ? (
                   <section key={block} className="activity-reveal">
-                    <h3>{door.activity.title}</h3>
-                    <p>{door.activity.body}</p>
+                    <h3>{payload.activity.title}</h3>
+                    <p>{payload.activity.body}</p>
                   </section>
                 ) : null;
               default:

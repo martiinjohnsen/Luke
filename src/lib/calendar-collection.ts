@@ -1,5 +1,6 @@
 import {
   doorBlockOrder,
+  blockDoor,blockKind,
   safeLink,
   youtubeId,
   type AdventCalendar,
@@ -29,12 +30,14 @@ export function calendarCollection(
     .filter((door) => openedDays.has(door.day) && door.day <= available)
     .sort((a, b) => b.day - a.day);
 
-  for (const door of doors) {
+  for (const root of doors) {
+    let slot="message";
     function add(content: Content) {
-      items.push({ ...content, day: door.day, id: `${door.day}-${content.kind}` });
+      items.push({ ...content, day: root.day, id: `${root.day}-${slot}` });
     }
-    if (door.body.trim()) add({ kind: "message", body: door.body });
-    for (const block of doorBlockOrder(door)) {
+    if (root.body.trim()) add({ kind: "message", body: root.body });
+    for (const id of doorBlockOrder(root)) {
+      const door=blockDoor(root,id),block=blockKind(id);slot=id;
       switch (block) {
         case "image":
           if (door.image)

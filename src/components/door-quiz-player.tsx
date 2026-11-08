@@ -18,10 +18,12 @@ export function DoorQuizPlayer({
   calendar,
   answers,
   onAnswer,
+  offset=0,
 }: {
   door: Door;
   calendar: AdventCalendar;
   answers: QuizProgress;
+  offset?:number;
   onAnswer: (
     index: number,
     question: QuizQuestion,
@@ -35,11 +37,11 @@ export function DoorQuizPlayer({
       <h3>{questions.length === 1 ? "Dagens spørsmål" : "Dagens quiz"}</h3>
       {questions.map((question, index) => (
         <QuestionPlayer
-          key={questionKey(door.day, index, question)}
+          key={questionKey(door.day, index+offset, question)}
           question={question}
-          attempt={answers[questionKey(door.day, index, question)]}
+          attempt={answers[questionKey(door.day, index+offset, question)]}
           sender={calendar.sender}
-          onAnswer={(response) => onAnswer(index, question, response)}
+          onAnswer={(response) => onAnswer(index+offset, question, response)}
         />
       ))}
     </section>

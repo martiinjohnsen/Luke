@@ -2,6 +2,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   DOOR_BLOCKS,
+  blockKind,blockDoor,patchDoorBlock,addDoorBlock,remainingBlocks,
   blockNames,
   doorBlockOrder,
   removeDoorBlock,
@@ -9,11 +10,13 @@ import {
   questionsForDoor,
   type Door,
   type DoorBlockKind,
+  type DoorBlockId,
+  type RepeatableBlockKind,
   type AdventCalendar,
   type GiftCard,
   type DoorEffect,
 } from "@/lib/model";
-import { validateDoor } from "@/lib/door-validation";
+import { validateDoor,issuesForBlock } from "@/lib/door-validation";
 import { FieldError, validationAttributes } from "./field-validation";
 import { compressImage } from "@/lib/storage";
 import { uploadMedia } from "@/lib/cloud/media";
@@ -41,7 +44,7 @@ function editorDraft(door: Door, calendar: AdventCalendar): Door {
   draft.contentOrder = doorBlockOrder(door).filter(
     (block) => block !== "effect",
   );
-  draft.questions = questionsForDoor(door, calendar);
+  draft.questions = questionsForDoor({...door,extra:undefined}, calendar);
   draft.kind = "message";
   delete draft.quiz;
   delete draft.showCalendarQuiz;
@@ -70,9 +73,12 @@ export function DoorEditor({
 }) {
   const { user } = useAccount();
   const store = useStore();
-  const [draft, setDraft] = useState(() => editorDraft(door, calendar));
+  const [rootDraft, setDraft] = useState(() => editorDraft(door, calendar));
+  const draft=rootDraft;
+  const [revealKey,setRevealKey]=useState(0);
+  const audioTasks=useRef(new Set<DoorBlockId>()),uploadingId=useRef<DoorBlockId|null>(null);
   const [validationAttempted, setValidationAttempted] = useState(false);
-  const issues = validationAttempted ? validateDoor(draft) : {};
+  const allIssues = validationAttempted ? validateDoor(draft) : {};
   const formRef = useRef<HTMLFormElement>(null);
   const formId = useId();
   const [effectPreview, setEffectPreview] = useState<{
@@ -83,6 +89,7 @@ export function DoorEditor({
     alive = useRef(true),
     uploadToken = useRef(0),
     stackAnchor = useRef<HTMLDivElement>(null);
+  const [errorBlock,setErrorBlock]=useState<DoorBlockId|null>(null);
   const [error, setError] = useState(""),
     [uploading, setUploading] = useState(false),
     [audioBusy, setAudioBusy] = useState(false),
@@ -114,7 +121,7 @@ export function DoorEditor({
   }
   function validate() {
     const next = validateDoor(draft);
-    setValidationAttempted(true);
+    setValidationAttempted(true);setRevealKey(value=>value+1);
     if (!Object.keys(next).length) return true;
     requestAnimationFrame(() => {
       const field = formRef.current?.querySelector<HTMLElement>('[data-validation-field][aria-invalid="true"]');
@@ -133,40 +140,32 @@ export function DoorEditor({
     if (validate())
       requestAnimationFrame(() => formRef.current?.closest(".dialog-scroll")?.scrollTo({ top: 0, behavior: "smooth" }));
   }
-  function add(block: DoorBlockKind) {
-    const patch: Partial<Door> = { contentOrder: [...order, block] };
-    if (block === "giftcard") patch.giftCard = emptyGift();
-    if (block === "quiz") patch.questions = [blankQuestion()];
-    if (block === "image") patch.image = "";
-    if (block === "audio") patch.audio = "";
-    if (block === "video") patch.videoUrl = "";
-    if (block === "link") patch.link = { label: "Åpne lenken", url: "" };
-    if (block === "activity") patch.activity = { title: "", body: "" };
-    if (block === "effect") patch.effect = "snow";
-    change(patch);
-    requestAnimationFrame(() =>
-      stackAnchor.current
-        ?.querySelector(`[data-block="${block}"]`)
-        ?.scrollIntoView({
-          block: "nearest",
-          behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-            .matches
-            ? "instant"
-            : "smooth",
-        }),
-    );
+  function add(block:RepeatableBlockKind) {
+    const patch:Partial<Door>={};
+    if(block==="giftcard") patch.giftCard=emptyGift();
+    if(block==="quiz") patch.questions=[blankQuestion()];
+    if(block==="image") patch.image="";
+    if(block==="audio") patch.audio="";
+    if(block==="video") patch.videoUrl="";
+    if(block==="link") patch.link={label:"Åpne lenken",url:""};
+    if(block==="activity") patch.activity={title:"",body:""};
+    const added=addDoorBlock(draft,block,patch);if(!added) return;
+    setDraft(added.door);setError("");
+    requestAnimationFrame(()=>stackAnchor.current?.querySelector(`[data-block-id="${added.id}"]`)?.scrollIntoView({block:"nearest",behavior:window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth"}));
   }
-  function remove(block: DoorBlockKind) {
-    if (block === "image") {
+  function changeBlock(id:DoorBlockId,patch:Partial<Door>) {setError("");setDraft(previous=>patchDoorBlock(previous,id,patch));}
+  function blockBusy(id:DoorBlockId,busy:boolean) {if(busy) audioTasks.current.add(id);else audioTasks.current.delete(id);setAudioBusy(audioTasks.current.size>0);}
+  function remove(block: DoorBlockId) {
+    if (blockKind(block) === "image" && uploadingId.current===block) {
       uploadToken.current++;
       setUploading(false);
     }
     setDraft((previous) => removeDoorBlock(previous, block));
     setError("");
   }
-  async function upload(file?: File) {
+  async function uploadBlock(file:File|undefined,id:DoorBlockId) {
     if (!file) return;
-    const token = ++uploadToken.current;
+    const token = ++uploadToken.current;uploadingId.current=id;setErrorBlock(id);
     setUploading(true);
     setError("");
     try {
@@ -176,8 +175,8 @@ export function DoorEditor({
       const image = await uploadMedia(await (await fetch(compressed)).blob(), {userId:user.id,calendarId:calendar.id,day:door.day,scope:"door"});
       if (alive.current && uploadToken.current === token)
         setDraft((previous) =>
-          doorBlockOrder(previous).includes("image")
-            ? { ...previous, image }
+          doorBlockOrder(previous).includes(id)
+            ? patchDoorBlock(previous,id,{image})
             : previous,
         );
     } catch (error) {
@@ -189,14 +188,15 @@ export function DoorEditor({
       if (alive.current && uploadToken.current === token) setUploading(false);
     }
   }
-  function gift(patch: Partial<GiftCard>) {
-    change({ giftCard: { ...(draft.giftCard ?? emptyGift()), ...patch } });
-  }
   function save() {
     if (!validate() || uploading || audioBusy) return;
     onSave({ ...draft, contentOrder: order, videoUrl: draft.videoUrl?.trim() });
   }
-  function renderBlock(block: DoorBlockKind): ReactNode {
+  function renderBlock(id:DoorBlockId):ReactNode {
+    const block=blockKind(id),draft={...blockDoor(rootDraft,id),extra:undefined},issues=issuesForBlock(allIssues,id);
+    const change=(patch:Partial<Door>)=>changeBlock(id,patch);
+    const gift=(patch:Partial<GiftCard>)=>change({giftCard:{...(draft.giftCard ?? emptyGift()),...patch}});
+    const upload=(file?:File)=>uploadBlock(file,id);
     switch (block) {
       case "giftcard": {
         const value = draft.giftCard ?? emptyGift();
@@ -274,7 +274,7 @@ export function DoorEditor({
       }
       case "image":
         return (
-          <div className="image-upload" {...validationAttributes({ ...issues, ...(error ? { image: error } : {}) }, "image")}>
+          <div className="image-upload" {...validationAttributes({ ...issues, ...(error && errorBlock===id ? { image: error } : {}) }, "image")}>
             {draft.image ? (
               <>
                 <MediaImage src={draft.image} alt={draft.imageAlt || "Valgt bilde"} />
@@ -320,11 +320,11 @@ export function DoorEditor({
                 />
               </label>
             )}
-            <FieldError issues={{ ...issues, ...(error ? { image: error } : {}) }} field="image" />
+            <FieldError issues={{ ...issues, ...(error && errorBlock===id ? { image: error } : {}) }} field="image" />
           </div>
         );
       case "audio":
-        return user ? <div {...validationAttributes(issues,"audio")}><AudioInput value={draft.audio} context={{userId:user.id,calendarId:calendar.id,day:door.day,scope:"door"}} onChange={audio=>change({audio})} onBusyChange={setAudioBusy} beforeUpload={store.syncNow} /><FieldError issues={issues} field="audio" /></div> : null;
+        return user ? <div {...validationAttributes(issues,"audio")}><AudioInput value={draft.audio} context={{userId:user.id,calendarId:calendar.id,day:door.day,scope:"door"}} onChange={audio=>change({audio})} onBusyChange={busy=>blockBusy(id,busy)} disabled={uploading || (audioBusy && !audioTasks.current.has(id))} beforeUpload={store.syncNow} /><FieldError issues={issues} field="audio" /></div> : null;
       case "video":
         return (
           <label>
@@ -467,7 +467,7 @@ export function DoorEditor({
       <div className="door-editor block-door-editor">
         {discard && (
           <div className="discard-notice" role="alert">
-            <strong>{Object.keys(issues).length
+            <strong>{Object.keys(allIssues).length
               ? "Fullfør de markerte feltene, eller forkast endringene."
               : "Du har endringer som ikke er lagret."}</strong>
             <div>
@@ -493,7 +493,7 @@ export function DoorEditor({
             <label>
               Tekst<span className="optional">Valgfritt</span>
               <textarea
-                {...validationAttributes(issues, "body")}
+                {...validationAttributes(allIssues, "body")}
                 autoFocus
                 rows={4}
                 maxLength={6000}
@@ -501,11 +501,12 @@ export function DoorEditor({
                 value={draft.body}
                 onChange={(event) => change({ body: event.target.value })}
               />
-              <FieldError issues={issues} field="body" />
+              <FieldError issues={allIssues} field="body" />
             </label>
           </div>
           <div ref={stackAnchor}>
             <ContentStack
+              revealKey={revealKey}
               order={order}
               onOrderChange={(contentOrder) => change({ contentOrder })}
               onRemove={remove}
@@ -516,20 +517,20 @@ export function DoorEditor({
             <h3>Legg til</h3>
             <div>
               {contentBlocks
-                .filter((block) => !order.includes(block))
                 .map((block) => (
                   <button
                     key={block}
                     type="button"
                     className="button secondary small-button"
+                    disabled={remainingBlocks(draft,block)===0}
                     onClick={() => add(block)}
                   >
                     <Icon name={blockIcons[block]} size={16} />
-                    {blockNames[block]}
+                    {blockNames[block]} <span className="add-block-count">{remainingBlocks(draft,block)}</span>
                   </button>
                 ))}
             </div>
-            {order.length === contentBlocks.length && (
+            {contentBlocks.every(block=>remainingBlocks(draft,block)===0) && (
               <p className="field-help">Alle innholdstypene er lagt til.</p>
             )}
           </div>

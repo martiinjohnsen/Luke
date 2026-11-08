@@ -99,6 +99,7 @@ export function Dialog({
         focusTimer.current = setTimeout(() => revealFocusedField(true), 350);
       }}
       onCancel={(event) => {
+        if(event.target!==event.currentTarget) return;
         event.preventDefault();
         onClose();
       }}

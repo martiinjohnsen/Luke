@@ -30,7 +30,7 @@ try {
     if (name.endsWith(".sql")) {
       const migration=await readFile(new URL("../supabase/migrations/"+name,import.meta.url),"utf8");
       await db.exec(migration);
-      if(name.startsWith("20261107")) await db.exec(migration);
+      if((name.startsWith("20261107") || name.startsWith("20261108"))) await db.exec(migration);
     }
   }
   for (const name of (await readdir(new URL("../supabase/tests/", import.meta.url))).sort()) {

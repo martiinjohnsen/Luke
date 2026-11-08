@@ -1,9 +1,24 @@
-import { correctChoices, doorBlockOrder, safeLink, youtubeId, type Door } from "./model.ts";
+import { correctChoices, doorBlockOrder, blockDoor, blockKind, safeLink, youtubeId, type Door, type DoorBlockId } from "./model.ts";
 import { isAudioSource } from "./media-reference.ts";
 
-export type DoorIssues = Record<string, string>;
+export const ISSUE_SCOPE=Symbol("validation scope");
+export type DoorIssues = Record<string, string> & {[ISSUE_SCOPE]?:string};
+export function issuesForBlock(issues:DoorIssues,id:DoorBlockId):DoorIssues {
+  const prefix=id.includes(":") ? `${id}/` : "";
+  return {...Object.fromEntries(Object.entries(issues).filter(([key])=>prefix ? key.startsWith(prefix) : !key.includes("/")).map(([key,value])=>[prefix ? key.slice(prefix.length) : key,value])),[ISSUE_SCOPE]:`${id}-`};
+}
 
 export function validateDoor(door: Door): DoorIssues {
+  const ids=doorBlockOrder(door),base={...door,extra:undefined,contentOrder:ids.filter(id=>!id.includes(":"))};
+  const issues=validateSingleDoor(base);
+  if(ids.some(id=>id.includes(":"))) delete issues.body;
+  for(const id of ids.filter(id=>id.includes(":"))) {
+    const child=validateSingleDoor({...blockDoor(door,id),extra:undefined,contentOrder:[blockKind(id)]});
+    for(const [key,value] of Object.entries(child)) issues[`${id}/${key}`]=value;
+  }
+  return issues;
+}
+function validateSingleDoor(door:Door):DoorIssues {
   const issues: DoorIssues = {};
   const blocks = doorBlockOrder(door).filter((block) => block !== "effect");
   if (!door.body.trim() && !blocks.length)

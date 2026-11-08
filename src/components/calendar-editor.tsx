@@ -8,6 +8,7 @@ import { Artwork } from "./artwork";
 import { DoorEditor } from "./door-editor";
 import { ShareDialog } from "./share-dialog";
 import { AppearancePicker } from "./appearance-picker";
+import { OwnerParticipants } from "./calendar-participants";
 import { GreetingInbox } from "./greetings";
 import {
   completedCount,
@@ -18,6 +19,7 @@ import {
   kindInfo,
   doorBlockOrder,
   blockNames,
+  blockKind,
   questionsForDoor,
   type AdventCalendar,
   type Door,
@@ -170,6 +172,7 @@ export function CalendarEditor({ id }: { id: string }) {
           </button>
         </div>
       </div>
+      <OwnerParticipants calendar={calendar} onOpenDoor={setEditing}/>
       <GreetingInbox calendarId={calendar.id}/>
       {calendar.demo && (
         <div className="example-notice">
@@ -246,7 +249,7 @@ export function CalendarEditor({ id }: { id: string }) {
                           ? door.contentOrder
                             ? doorBlockOrder(door)
                                 .filter((block) => block !== "effect")
-                                .map((block) => blockNames[block])
+                                .map((block) => blockNames[blockKind(block)])
                                 .slice(0, 2)
                                 .join(" · ") || "Hilsen"
                             : kindInfo[door.kind].name

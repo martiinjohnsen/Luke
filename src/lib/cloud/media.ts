@@ -1,5 +1,6 @@
 "use client";
 import type { AdventCalendar, AppData } from "../model";
+import {doorPayloads,mapDoorPayloads} from "../model";
 import { MEDIA_BUCKET, MAX_MEDIA_BYTES, mediaBelongsTo, mediaPath, mediaReference, type MediaScope } from "../media-reference";
 import { clientForUser } from "./client";
 import { needsMediaMigration } from "../media-workspace";
@@ -47,11 +48,11 @@ export async function prepareWorkspaceMedia(data: AppData, userId: string, versi
     if (!ids.has(calendar.id) || !versions[calendar.id] || !needsMediaMigration(calendar)) { calendars.push(calendar); continue; }
     const doors = [];
     for (const door of calendar.doors) {
-      const next = { ...door };
-      for (const kind of ["image","audio"] as const) {
-        const source = door[kind];
+      const next = mapDoorPayloads(door,payload=>({...payload}));
+      for(const payload of doorPayloads(next)) for (const kind of ["image","audio"] as const) {
+        const source = payload[kind];
         if (source && !mediaBelongsTo(source,calendar.id,door.day,"door"))
-          next[kind] = await uploadMedia(await downloadMedia(source,userId), { userId,calendarId:calendar.id,day:door.day,scope:"door" });
+          payload[kind] = await uploadMedia(await downloadMedia(source,userId), { userId,calendarId:calendar.id,day:door.day,scope:"door" });
       }
       doors.push(next);
     }

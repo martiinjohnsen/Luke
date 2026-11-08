@@ -46,6 +46,7 @@ export function CalendarLibrary() {
             <br />
             Stor glede.
           </h2>
+          <p className="hero-tagline">Din digitale julekalender</p>
           <p>
             Lag en personlig kalender med hilsener, gavekort og overraskelser.
           </p>

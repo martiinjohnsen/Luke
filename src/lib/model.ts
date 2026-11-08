@@ -93,6 +93,9 @@ export const DOOR_BLOCKS = [
   "effect",
 ] as const;
 export type DoorBlockKind = (typeof DOOR_BLOCKS)[number];
+export type RepeatableBlockKind = Exclude<DoorBlockKind,"effect">;
+export type ExtraBlockId = `${RepeatableBlockKind}:2` | `${RepeatableBlockKind}:3`;
+export type DoorBlockId = DoorBlockKind | ExtraBlockId;
 export const blockNames: Record<DoorBlockKind, string> = {
   giftcard: "Gavekort",
   image: "Bilde",
@@ -129,7 +132,8 @@ export interface Door {
   showCalendarQuiz?: boolean;
   questions?: QuizQuestion[];
   giftCard?: GiftCard;
-  contentOrder?: DoorBlockKind[];
+  contentOrder?: DoorBlockId[];
+  extra?: Partial<Record<ExtraBlockId,Door>>;
   activity?: { title: string; body: string };
 }
 export interface AdventCalendar {
@@ -227,6 +231,7 @@ export function hasDoorContent(door: Door): boolean {
       door.showCalendarQuiz ||
       door.giftCard?.merchant ||
       door.contentOrder?.length ||
+      Object.keys(door.extra ?? {}).length ||
       door.activity?.title ||
       door.activity?.body ||
       door.questions?.some(
@@ -250,7 +255,7 @@ export function safeLink(value: string): string | null {
   }
 }
 export function isDoorComplete(door: Door): boolean {
-  if (door.contentOrder !== undefined) {
+  if (door.contentOrder !== undefined || door.extra) {
     const blocks = doorBlockOrder(door);
     if (!blocks.every((block) => isBlockComplete(door, block))) return false;
     return Boolean(
@@ -308,7 +313,7 @@ export function calendarContentSummary(calendar: AdventCalendar) {
     const blocks = doorBlockOrder(door).filter((block) => block !== "effect");
     if (door.kind === "activity" && !blocks.includes("activity"))
       blocks.push("activity");
-    for (const block of blocks) counts.set(block, (counts.get(block) ?? 0) + 1);
+    for (const id of blocks) {const block=blockKind(id);counts.set(block, (counts.get(block) ?? 0) + 1);}
     questionCount += questionsForDoor(door, calendar).length;
   }
   return {
@@ -520,7 +525,33 @@ function isQuestion(value: unknown): value is QuizQuestion {
         )))
   );
 }
-export function doorBlockOrder(door: Door): DoorBlockKind[] {
+export function blockKind(id:DoorBlockId):DoorBlockKind {return id.split(":")[0] as DoorBlockKind;}
+export function blockDoor(door:Door,id:DoorBlockId):Door {return id.includes(":") ? door.extra?.[id as ExtraBlockId] ?? emptyDoor(door.day) : door;}
+export function doorPayloads(door:Door):Door[] {return [door,...Object.values(door.extra ?? {}).filter((value):value is Door=>!!value)];}
+export function mapDoorPayloads(door:Door,visit:(value:Door)=>Door):Door {
+  const next=visit(door);
+  if(door.extra) next.extra=Object.fromEntries(Object.entries(door.extra).map(([id,value])=>[id,visit(value!)]));
+  return next;
+}
+export function blockQuestionOffset(door:Door,id:DoorBlockId,calendar?:AdventCalendar):number {
+  if(id==="quiz") return 0;
+  let count=questionsForDoor({...door,extra:undefined},calendar).filter(isQuestionComplete).length;
+  if(id==="quiz:3" && door.extra?.["quiz:2"]) count+=questionsForDoor(door.extra["quiz:2"],calendar).filter(isQuestionComplete).length;
+  return count;
+}
+export function patchDoorBlock(door:Door,id:DoorBlockId,patch:Partial<Door>):Door {
+  return id.includes(":") ? {...door,extra:{...door.extra,[id]:{...blockDoor(door,id),...patch}}} : {...door,...patch};
+}
+export function remainingBlocks(door:Door,kind:RepeatableBlockKind):number {return 3-doorBlockOrder(door).filter(id=>blockKind(id)===kind).length;}
+export function addDoorBlock(door:Door,kind:RepeatableBlockKind,patch:Partial<Door>):{door:Door;id:DoorBlockId}|null {
+  const order=doorBlockOrder(door);
+  const id=([kind,`${kind}:2`,`${kind}:3`] as DoorBlockId[]).find(id=>!order.includes(id));
+  if(!id) return null;
+  let next=id.includes(":") ? patchDoorBlock(door,id,{...emptyDoor(door.day),...patch,contentOrder:[kind]}) : {...door,...patch};
+  next={...next,contentOrder:[...order,id]};
+  return {door:next,id};
+}
+export function doorBlockOrder(door: Door): DoorBlockId[] {
   const inferred: DoorBlockKind[] = [];
   if (
     door.giftCard ||
@@ -548,13 +579,13 @@ export function doorBlockOrder(door: Door): DoorBlockKind[] {
     inferred.push("quiz");
   if (door.activity) inferred.push("activity");
   if (door.effect && door.effect !== "none") inferred.push("effect");
-  return [...new Set([...(door.contentOrder ?? []), ...inferred])];
+  return [...new Set([...(door.contentOrder ?? []), ...inferred,...Object.keys(door.extra ?? {}) as ExtraBlockId[]])];
 }
 export function moveDoorBlock(
-  order: DoorBlockKind[],
+  order: DoorBlockId[],
   from: number,
   to: number,
-): DoorBlockKind[] {
+): DoorBlockId[] {
   if (from < 0 || from >= order.length || to < 0 || to >= order.length)
     return order;
   const next = [...order];
@@ -562,12 +593,13 @@ export function moveDoorBlock(
   next.splice(to, 0, item);
   return next;
 }
-export function removeDoorBlock(door: Door, block: DoorBlockKind): Door {
+export function removeDoorBlock(door: Door, block: DoorBlockId): Door {
   const next = {
     ...door,
     kind: "message" as const,
     contentOrder: doorBlockOrder(door).filter((value) => value !== block),
   };
+  if(block.includes(":")) {next.extra={...door.extra};delete next.extra[block as ExtraBlockId];return next;}
   if (block === "image") {
     delete next.image;
     delete next.imageAlt;
@@ -585,7 +617,8 @@ export function removeDoorBlock(door: Door, block: DoorBlockKind): Door {
   if (block === "effect") delete next.effect;
   return next;
 }
-function isBlockComplete(door: Door, block: DoorBlockKind): boolean {
+function isBlockComplete(root: Door, id: DoorBlockId): boolean {
+  const block=blockKind(id),door={...blockDoor(root,id),extra:undefined};
   switch (block) {
     case "image":
       return Boolean(door.image);
@@ -635,12 +668,12 @@ export function questionsForDoor(
   door: Door,
   calendar?: AdventCalendar,
 ): QuizQuestion[] {
-  if (door.questions !== undefined) return door.questions;
-  const questions: QuizQuestion[] = door.quiz
+  const questions: QuizQuestion[] = door.questions !== undefined ? [...door.questions] : door.quiz
     ? [{ title: door.title, ...door.quiz, options: [...door.quiz.options] }]
     : [];
-  if (door.showCalendarQuiz && calendar?.quiz)
+  if (door.questions === undefined && door.showCalendarQuiz && calendar?.quiz)
     questions.push(...structuredClone(calendar.quiz.questions));
+  for(const id of ["quiz:2","quiz:3"] as const) if(door.extra?.[id]) questions.push(...questionsForDoor(door.extra[id]!,calendar));
   return questions;
 }
 export function isCalendarQuiz(value: unknown): value is CalendarQuiz {
@@ -694,7 +727,7 @@ export function isCalendar(value: unknown): value is AdventCalendar {
             !/^([1-9]|1[0-9]|2[0-4])$/.test(day) ||
             !Number.isInteger(count) ||
             Number(count) < 0 ||
-            Number(count) > 32,
+            Number(count) > 96,
         ))
     )
       return false;
@@ -731,13 +764,28 @@ export function isCalendar(value: unknown): value is AdventCalendar {
     if (
       door.contentOrder !== undefined &&
       (!Array.isArray(door.contentOrder) ||
-        door.contentOrder.length > DOOR_BLOCKS.length ||
+        door.contentOrder.length > 22 ||
         new Set(door.contentOrder).size !== door.contentOrder.length ||
         !door.contentOrder.every((block) =>
-          DOOR_BLOCKS.includes(block as DoorBlockKind),
+          typeof block==="string" && (/^(giftcard|image|audio|video|link|quiz|activity)(:[23])?$/.test(block) || block==="effect"),
         ))
     )
       return false;
+    if(door.extra!==undefined) {
+      if(!record(door.extra) || Object.keys(door.extra).length>14) return false;
+      for(const [id,payload] of Object.entries(door.extra)) {
+        if(!/^(giftcard|image|audio|video|link|quiz|activity):[23]$/.test(id) || !record(payload) || payload.day!==door.day || payload.extra!==undefined ||
+          payload.kind!=="message" || payload.title!=="" || payload.body!=="" ||
+          !Array.isArray(payload.contentOrder) || payload.contentOrder.length!==1 || payload.contentOrder[0]!==id.split(":")[0]) return false;
+        const fields:Record<string,string[]>={giftcard:["giftCard"],image:["image","imageAlt"],audio:["audio"],video:["videoUrl"],link:["link"],quiz:["questions"],activity:["activity"]};
+        const allowed=new Set(["day","kind","title","body","contentOrder",...fields[id.split(":")[0]]]);
+        if(Object.keys(payload).some(key=>!allowed.has(key))) return false;
+        const child={...payload,contentOrder:[id.split(":")[0]]};
+        if(!isCalendar({...value,doors:(value.doors as Door[]).map(d=>d.day===door.day ? child : emptyDoor(d.day))})) return false;
+        if(doorBlockOrder(child as unknown as Door).some(block=>block!==id.split(":")[0])) return false;
+      }
+    }
+    if(door.contentOrder?.some((id:unknown)=>typeof id==="string" && id.includes(":") && !(record(door.extra) && door.extra[id]))) return false;
     if (
       door.activity !== undefined &&
       (!record(door.activity) ||

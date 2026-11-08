@@ -332,7 +332,9 @@ export function Provider({ children }: { children: ReactNode }) {
       );
     };
     schedule();
+    const poll=setInterval(resume,30000);
     return () => {
+      clearInterval(poll);
       clearTimeout(debounce);
       clearTimeout(midnight);
       void supabase().removeChannel(channel);

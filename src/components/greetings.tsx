@@ -69,9 +69,12 @@ function GreetingForm({calendarId,day,userId,record,onClose,preview}:{calendarId
 export function GreetingInbox({calendarId}:{calendarId:string}) {
   const greetings=useGreetings();
   const [open,setOpen]=useState(false),[error,setError]=useState(""),[visibleCount,setVisibleCount]=useState(12);
+  const [sender,setSender]=useState("all");
   const items=greetingsForCalendar(greetings.items,calendarId);
+  const senders=[...new Map(items.map(item=>[item.userId,{id:item.userId,name:item.previewMode ? "Mine prøvehilsener" : item.name}])).values()];
+  const filtered=sender==="all" ? items : items.filter(item=>item.userId===sender);
   const unread=items.filter(item=>item.revision>item.seenRevision);
-  const visible=items.slice(0,visibleCount);
+  const visible=filtered.slice(0,visibleCount);
   const visibleUnread=visible.filter(item=>item.revision>item.seenRevision);
   const signature=visibleUnread.map(item=>`${item.userId}:${item.day}:${item.previewMode ?? "recipient"}:${item.temporary ?? false}:${item.revision}`).join("|");
   useEffect(()=>{const hash=()=>{if(location.hash==="#hilsener") setOpen(true);};hash();window.addEventListener("hashchange",hash);return ()=>window.removeEventListener("hashchange",hash);},[]);
@@ -79,12 +82,13 @@ export function GreetingInbox({calendarId}:{calendarId:string}) {
   return <section className="greeting-inbox" id="hilsener">
     <button type="button" className="button secondary greeting-inbox-toggle" aria-expanded={open} onClick={()=>setOpen(!open)}><Icon name="message" size={18}/><strong>Hilsener tilbake</strong><span>{unread.length ? `${unread.length} nye` : items.length || ""}</span><Icon name="chevron" size={16}/></button>
     {open && <div className="greeting-inbox-content">
+      {senders.length>1 && <label className="greeting-sender-filter">Hilsener fra<select value={sender} onChange={event=>{setSender(event.target.value);setVisibleCount(12);}}><option value="all">Alle</option>{senders.map(person=><option key={person.id} value={person.id}>{person.name}</option>)}</select></label>}
       {(error || greetings.error) && <p className="form-error" role="alert">{error || greetings.error}</p>}
       {!items.length ? <p className="field-help">Hilsener fra mottakeren og dine egne prøvehilsener dukker opp her.</p> : visible.map(item=><article className="greeting-message" key={`${item.userId}:${item.day}:${item.previewMode ?? "recipient"}:${item.temporary ?? false}`}>
         <header><strong>{item.previewMode ? "Prøvehilsen fra deg" : `Hilsen fra ${item.name}`}</strong><span>{item.day}. desember</span><time dateTime={item.updatedAt}>{new Date(item.updatedAt).toLocaleDateString("nb-NO",{day:"numeric",month:"short"})}</time></header>
         {item.body && <p>{item.body}</p>}{item.image && <MediaImage src={item.image} alt={`Et bilde fra ${item.name}`} loading="lazy"/>}{item.audio && <AudioPlayer src={item.audio} label={`Lydhilsen fra ${item.name}`}/>}
       </article>)}
-      {items.length>visibleCount && <button type="button" className="button secondary" onClick={()=>setVisibleCount(visibleCount+12)}>Vis flere hilsener</button>}
+      {filtered.length>visibleCount && <button type="button" className="button secondary" onClick={()=>setVisibleCount(visibleCount+12)}>Vis flere hilsener</button>}
     </div>}
   </section>;
 }

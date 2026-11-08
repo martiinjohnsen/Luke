@@ -13,7 +13,7 @@ export function QuizOverview({
       <dl className="quiz-overview-stats">
         <div>
           <dt>Riktige svar</dt>
-          <dd>{summary.correct}</dd>
+          <dd>{summary.correct}<span> / {summary.total}</span></dd>
         </div>
         <div>
           <dt>Besvart</dt>
@@ -51,7 +51,7 @@ export function QuizOverview({
               {day.locked ? (
                 <Icon name="lock" size={16} />
               ) : day.answered ? (
-                `${day.correct} riktige`
+                `${day.correct} / ${day.total} riktige`
               ) : (
                 "Ubesvart"
               )}

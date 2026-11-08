@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { AdventCalendar } from "@/lib/model";
 import {
   calendarCollection,
@@ -23,8 +23,10 @@ const contentLabels = {
 const category = (item: Keepsake) => item.kind === "video" ? "link" : item.kind;
 
 export function CalendarOverview({
-  calendar, opened, available, summary, onClose, onOpenDoor,
+  calendar, opened, available, summary, onClose, onOpenDoor, controls, leaderboard,
 }: {
+  controls?:ReactNode;
+  leaderboard?:ReactNode;
   calendar: AdventCalendar;
   opened: readonly number[];
   available: number;
@@ -41,6 +43,7 @@ export function CalendarOverview({
   return (
     <Dialog title="Kalenderoversikt" onClose={onClose} wide>
       <div className="calendar-overview">
+        {controls}
         <p className="overview-intro">Gavekort, bilder, lydhilsener og lenker fra lukene du har åpnet, samlet på ett sted.</p>
         <div className="overview-sections" role="group" aria-label="Velg oversikt">
           <button type="button" aria-pressed={section === "content"} onClick={() => setSection("content")}>
@@ -52,6 +55,7 @@ export function CalendarOverview({
         </div>
         {section === "quiz" ? (
           <section aria-label="Quizoversikt">
+            {leaderboard}
             {summary.total > 0 ? (
               <QuizOverview summary={summary} />
             ) : (

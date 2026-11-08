@@ -3,6 +3,7 @@ import { useEffect, useState, type ImgHTMLAttributes } from "react";
 import { MEDIA_BUCKET, mediaPath } from "@/lib/media-reference";
 import { clientForUser, authMessage } from "@/lib/cloud/client";
 import { useAccount } from "./account-provider";
+import { AudioControls } from "./audio-controls";
 function useMedia(source: string) {
   const { user } = useAccount();
   const [state,setState] = useState({ source:"", userId:"", url:"", error:"" });
@@ -35,5 +36,5 @@ export function MediaImage({src,alt,...props}: Omit<ImgHTMLAttributes<HTMLImageE
 }
 export function AudioPlayer({src,label="Lydhilsen",compact=false}:{src:string;label?:string;compact?:boolean}) {
   const media=useMedia(src);
-  return <div className={`audio-player${compact ? " is-compact" : ""}`}>{!compact && <span>{label}</span>}{media.url ? <audio controls preload="metadata" src={media.url} aria-label={label} /> : <p className="media-placeholder" role="status">{media.error || "Henter lydhilsenen …"}</p>}</div>;
+  return <div className={`audio-player${compact ? " is-compact" : ""}`}>{!compact && <span>{label}</span>}{media.url ? <AudioControls key={media.url} url={media.url} label={label}/> : <p className="media-placeholder" role="status">{media.error || "Henter lydhilsenen …"}</p>}</div>;
 }
