@@ -7,6 +7,7 @@ import { Icon, type IconName } from "./icons";
 import { Artwork } from "./artwork";
 import { DoorEditor } from "./door-editor";
 import { ShareDialog } from "./share-dialog";
+import { CalendarDeleteDialog } from "./calendar-delete-dialog";
 import { AppearancePicker } from "./appearance-picker";
 import { OwnerParticipants, useParticipants } from "./calendar-participants";
 import { GreetingInbox } from "./greetings";
@@ -48,6 +49,7 @@ export function CalendarEditor({ id }: { id: string }) {
     [settingsDirty, setSettingsDirty] = useState(false),
     [filter, setFilter] = useState("all"),
     [editing, setEditing] = useState<number | null>(null),
+    [confirmDelete, setConfirmDelete] = useState(false),
     [share, setShare] = useState(false);
   const participants=useParticipants(id,store.cloud && !!calendar && !isReceived(calendar));
   if (!store.cloud)
@@ -210,6 +212,7 @@ export function CalendarEditor({ id }: { id: string }) {
           key={calendar.id}
           calendar={calendar}
           onDirty={setSettingsDirty}
+          onDelete={() => setConfirmDelete(true)}
           onDone={() => {
             setSettings(false);
             setSettingsDirty(false);
@@ -342,6 +345,9 @@ export function CalendarEditor({ id }: { id: string }) {
       {share && (
         <ShareDialog calendar={calendar} onClose={() => setShare(false)} />
       )}
+      {confirmDelete && (
+        <CalendarDeleteDialog calendar={calendar} onClose={() => setConfirmDelete(false)} onDeleted={() => router.push("/calendars")} />
+      )}
     </div>
   );
 }
@@ -349,10 +355,12 @@ function CalendarSettings({
   calendar,
   onDirty,
   onDone,
+  onDelete,
 }: {
   calendar: AdventCalendar;
   onDirty: (dirty: boolean) => void;
   onDone: () => void;
+  onDelete: () => void;
 }) {
   const { update, toast } = useStore();
   const [draft, setDraft] = useState(() => ({
@@ -536,6 +544,10 @@ function CalendarSettings({
         </section>
       </div>
       <div className="dialog-actions">
+        <button type="button" className="button danger calendar-delete-button" onClick={onDelete}>
+          <Icon name="trash" size={17} />
+          Slett kalender
+        </button>
         <button
           type="button"
           className="button secondary"

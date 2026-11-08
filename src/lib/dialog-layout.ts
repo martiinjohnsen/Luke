@@ -1,11 +1,19 @@
-type VerticalBounds = { top: number; bottom: number };
-
-export function fieldScrollOffset(viewport: VerticalBounds, field: VerticalBounds, padding = 16, center = false): number {
-  const top = viewport.top + padding;
-  const bottom = viewport.bottom - padding;
-  if (field.bottom - field.top > bottom - top) return field.top - top;
-  if (center) return (field.top + field.bottom - top - bottom) / 2;
-  if (field.bottom > bottom) return field.bottom - bottom;
-  if (field.top < top) return field.top - top;
-  return 0;
+/** Keep touch dialogs full size while the keyboard covers the lower screen. */
+export function installDialogLayout(dialog: HTMLDialogElement): () => void {
+  let layoutWidth = -1;
+  const resize = () => {
+    const width = document.documentElement.clientWidth;
+    const touch = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+    // Keyboard and browser bars change height, not the page's layout width.
+    // A rotation or a desktop window resize still gets a fresh measurement.
+    if ((touch || width <= 760) && width === layoutWidth) return;
+    layoutWidth = width;
+    dialog.style.setProperty(
+      "--dialog-layout-height",
+      `${Math.max(document.documentElement.clientHeight, window.innerHeight)}px`,
+    );
+  };
+  resize();
+  window.addEventListener("resize", resize);
+  return () => window.removeEventListener("resize", resize);
 }

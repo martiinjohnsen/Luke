@@ -1397,9 +1397,9 @@ input[type="radio"] {
   inset: auto;
   left: 50%;
   top: calc(
-    var(--dialog-viewport-top, 0px) + env(safe-area-inset-top, 0px) +
+    env(safe-area-inset-top, 0px) +
       (
-        var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) -
+        var(--dialog-layout-height, 100svh) - env(safe-area-inset-top, 0px) -
           env(safe-area-inset-bottom, 0px)
       ) /
       2
@@ -1416,7 +1416,7 @@ input[type="radio"] {
     inset 0 1px 0 white,
     0 24px 100px #24152f30;
   max-height: calc(
-    var(--dialog-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) -
+    var(--dialog-layout-height, 100svh) - env(safe-area-inset-top, 0px) -
       env(safe-area-inset-bottom, 0px) - 48px
   );
   overflow: hidden;
@@ -2861,7 +2861,7 @@ input[type="radio"] {
   object-fit: contain;
   border-radius: 13px;
   margin: 0 0 20px;
-  background: #f1e8f4;
+  background: var(--primary-pale);
 }
 .empty-door-message {
   padding: 15px;
@@ -8909,7 +8909,7 @@ input[type="radio"] {
   padding: 5px;
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: #eee8f26b;
+  background: color-mix(in srgb, var(--primary-pale) 42%, transparent);
   margin-bottom: 23px;
 }
 .overview-sections > button {
@@ -9009,7 +9009,11 @@ input[type="radio"] {
   justify-content: space-between;
   font-size: 12px;
   width: 100%;
+  gap: 8px;
+  flex-wrap: wrap;
 }
+.collection-link > span { flex: 1 1 70px; min-width: 0; }
+.collection-link > svg { flex-shrink: 0; }
 .collection-item .compact-gift-card {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -9035,7 +9039,7 @@ input[type="radio"] {
   padding: 32px 14px;
   color: var(--muted);
 }
-.overview-empty > svg { color: #a48bb8; margin-bottom: 16px; }
+.overview-empty > svg { color: var(--primary); margin-bottom: 16px; }
 .overview-empty h3 { color: var(--ink); font-size: 24px; margin: 0 0 12px; }
 .overview-empty p { font-size: 13px; line-height: 1.8; margin: 0; }
 @media (max-width: 520px) {
@@ -9092,9 +9096,12 @@ input[type="radio"] {
   .summary-content-grid .summary-stat strong { white-space: nowrap; }
 }
 @media (max-width: 760px) {
-  .dialog.is-keyboard-open .sticky-actions, .dialog.is-keyboard-open .calendar-settings-panel > .dialog-actions { position: static; }
-  .dialog.is-keyboard-open > .dialog-header { padding: 12px 16px; }
-  .dialog.is-keyboard-open > .dialog-header h2 { font-size: 20px; }
+  .door-editor :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"]), textarea, select) {
+    font: 16px/1.45 var(--font);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    caret-color: var(--primary-dark);
+  }
   .topbar-right { gap: 9px; }
 }
 @media (max-width: 379px) {
@@ -9110,10 +9117,10 @@ input[type="radio"] {
 :root,
 .recipient-view.calendar-palette {
   --control-edge: color-mix(in srgb, var(--control-accent) 38%, transparent);
-  --action-tint: color-mix(in srgb, var(--control-accent) 80%, #e4d7ec);
+  --action-tint: color-mix(in srgb, var(--control-accent) 80%, var(--primary-pale));
   --action-fill: color-mix(in srgb, var(--action-tint) var(--glass-action-fill), transparent);
-  --action-hover: color-mix(in srgb, color-mix(in srgb, var(--control-accent) 88%, #e4d7ec) var(--glass-action-fill), transparent);
-  --action-pressed: color-mix(in srgb, color-mix(in srgb, var(--control-accent) 94%, #e4d7ec) var(--glass-action-fill), transparent);
+  --action-hover: color-mix(in srgb, color-mix(in srgb, var(--control-accent) 88%, var(--primary-pale)) var(--glass-action-fill), transparent);
+  --action-pressed: color-mix(in srgb, color-mix(in srgb, var(--control-accent) 94%, var(--primary-pale)) var(--glass-action-fill), transparent);
   --choice-fill: color-mix(in srgb, color-mix(in srgb, var(--control-accent) var(--glass-choice-tint), white) var(--glass-choice-fill), transparent);
   --choice-hover: color-mix(in srgb, color-mix(in srgb, var(--control-accent) var(--glass-choice-hover-tint), white) var(--glass-choice-fill), transparent);
   --choice-pressed: color-mix(in srgb, color-mix(in srgb, var(--control-accent) var(--glass-choice-pressed-tint), white) var(--glass-choice-fill), transparent);
@@ -9151,6 +9158,7 @@ input[type="radio"] {
 .recipient-view.calendar-palette {
   --control-accent: var(--theme-color);
   --control-ink: var(--primary-dark);
+  --neutral-hover: color-mix(in srgb, var(--neutral-fill) 85%, var(--theme-color));
 }
 @media (hover: hover) and (pointer: fine) {
   .button.primary:hover:not(:disabled), .bottom-nav > a.active:hover { background-color: var(--action-hover); }
@@ -9330,23 +9338,23 @@ input[type="radio"] {
 .content-block[data-block="audio"] > .content-block-header { min-height: 48px; padding: 6px 10px 6px 14px; }
 .content-block[data-block="audio"] > .content-block-body { padding: 12px 14px; }
 .audio-input input[type=file], .greeting-form input[type=file] { position: absolute; width: 1px; height: 1px; padding: 0; opacity: 0; overflow: hidden; }
-.audio-player { display: grid; gap: 7px; min-width: 0; padding: 12px; border: 1px solid #cbb6d885; border-radius: 15px; background: color-mix(in srgb, #e9dff2 var(--glass-neutral-fill), transparent); }
-.audio-player > span { color: #735588; font-size: 12px; }
+.audio-player { display: grid; gap: 7px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: 15px; background: color-mix(in srgb, var(--primary-pale) var(--glass-neutral-fill), transparent); }
+.audio-player > span { color: var(--primary); font-size: 12px; }
 .audio-player.is-compact { padding: 8px; gap: 0; }
 .audio-element { display: none; }
-.audio-controls { display: grid; grid-template-columns: 36px auto minmax(30px, 1fr) 36px; align-items: center; gap: 9px; min-width: 0; min-height: 44px; padding: 4px 7px; border-radius: 24px; background-color: color-mix(in srgb, #d5bfe4 var(--glass-choice-fill), #f4eef8); background-image: var(--control-sheen); color: #654079; }
-.audio-control-button { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; color: #654079; background: transparent; }
-.audio-time { color: #654079; font: 11px/1.4 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.audio-controls > .audio-timeline { appearance: none; -webkit-appearance: none; width: 100%; min-width: 0; height: 30px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; accent-color: #9670ad; cursor: pointer; touch-action: pan-y; }
-.audio-timeline::-webkit-slider-runnable-track { height: 5px; border-radius: 5px; background: linear-gradient(to right, #9670ad var(--audio-position), #d8c6e4 var(--audio-position)); }
-.audio-timeline::-moz-range-track { height: 5px; border-radius: 5px; background: #d8c6e4; }
-.audio-timeline::-moz-range-progress { height: 5px; border-radius: 5px; background: #9670ad; }
-.audio-timeline::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; height: 11px; width: 11px; margin-top: -3px; border: 1px solid #f5eff9; border-radius: 50%; background: #8d63a5; }
-.audio-timeline::-moz-range-thumb { height: 10px; width: 10px; border: 1px solid #f5eff9; border-radius: 50%; background: #8d63a5; }
+.audio-controls { display: grid; grid-template-columns: 36px auto minmax(30px, 1fr) 36px; align-items: center; gap: 9px; min-width: 0; min-height: 44px; padding: 4px 7px; border-radius: 24px; background-color: color-mix(in srgb, var(--control-accent) var(--glass-choice-fill), var(--primary-pale)); background-image: var(--control-sheen); color: var(--primary-dark); }
+.audio-control-button { display: inline-grid; place-items: center; width: 36px; height: 36px; padding: 0; border-radius: 50%; color: var(--primary-dark); background: transparent; }
+.audio-time { color: var(--primary-dark); font: 11px/1.4 var(--font); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.audio-controls > .audio-timeline { appearance: none; -webkit-appearance: none; width: 100%; min-width: 0; height: 30px; min-height: 0; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; accent-color: var(--primary); cursor: pointer; touch-action: pan-y; }
+.audio-timeline::-webkit-slider-runnable-track { height: 5px; border-radius: 5px; background: linear-gradient(to right, var(--primary) var(--audio-position), var(--primary-pale) var(--audio-position)); }
+.audio-timeline::-moz-range-track { height: 5px; border-radius: 5px; background: var(--primary-pale); }
+.audio-timeline::-moz-range-progress { height: 5px; border-radius: 5px; background: var(--primary); }
+.audio-timeline::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; height: 11px; width: 11px; margin-top: -3px; border: 1px solid var(--paper); border-radius: 50%; background: var(--primary); }
+.audio-timeline::-moz-range-thumb { height: 10px; width: 10px; border: 1px solid var(--paper); border-radius: 50%; background: var(--primary); }
 .audio-timeline:disabled { cursor: default; opacity: .55; }
 .audio-error { padding: 4px 0; color: #915469; }
-@media (hover: hover) and (pointer: fine) { .audio-control-button:hover { background: #9670ad24; } }
-.audio-control-button:active { background: #9670ad38; }
+@media (hover: hover) and (pointer: fine) { .audio-control-button:hover { background: color-mix(in srgb, var(--primary) 14%, transparent); } }
+.audio-control-button:active { background: color-mix(in srgb, var(--primary) 22%, transparent); }
 @media (max-width: 460px) {
   .audio-controls { grid-template-columns: 32px auto minmax(24px, 1fr) 32px; gap: 5px; padding: 4px; }
   .audio-control-button { width: 32px; height: 36px; }
@@ -9413,7 +9421,7 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 :root :is(.bottom-nav, .topbar, .recipient-topbar, .preview-controls, .dialog-header, .dialog-footer, .sticky-actions, .calendar-settings-panel > .dialog-actions, .content-block-header) {
   background-color: color-mix(in srgb, white var(--glass-nav-fill), transparent);
   background-image: linear-gradient(135deg, color-mix(in srgb, white var(--glass-nav-shine), transparent), transparent);
-  border-color: #a58caf40;
+  border-color: color-mix(in srgb, var(--primary) 25%, transparent);
   box-shadow: inset 0 1px 1px #ffffff47, inset 0 -1px 1px #76568a12;
   backdrop-filter: blur(var(--glass-nav-blur)) saturate(1.55);
   -webkit-backdrop-filter: blur(var(--glass-nav-blur)) saturate(1.55);
@@ -9443,8 +9451,8 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .quiz-leaderboard h3 { margin: 0 0 12px; font: 600 15px/1.4 var(--font); }
 .quiz-leaderboard ol { display: grid; gap: 7px; list-style: none; padding: 0; margin: 0; }
 .quiz-leaderboard li { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 13px; background: #ffffff40; }
-.quiz-leaderboard .is-self { background: #b59ac521; }
-.leaderboard-rank { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: #ad93be26; color: var(--primary-dark); font-size: 12px; }
+.quiz-leaderboard .is-self { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+.leaderboard-rank { display: grid; place-items: center; width: 27px; height: 27px; border-radius: 50%; background: var(--primary-pale); color: var(--primary-dark); font-size: 12px; }
 .leaderboard-name { flex: 1; min-width: 0; overflow-wrap: anywhere; font-weight: 600; font-size: 13px; }
 .leaderboard-name small { font-weight: 400; font-size: 11px; color: var(--muted); display: block; margin-top: 3px; }
 .leaderboard-name small:first-child { display: inline; margin-left: 7px; }
@@ -9459,7 +9467,7 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
   .content-block-header { gap: 5px; }
   .block-position { width: 14px; }
 }
-/* Only opened mobile doors lift their number to leave room for the greeting. */
+/* Numbers share one center; the opened check sits above and the greeting below. */
 @media (max-width: 760px) {
   .recipient-door-grid { gap: 10px; }
   .recipient-door-cell { aspect-ratio: .92; min-height: 96px; }
@@ -9512,6 +9520,11 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .greeting-message-grid .audio-control-button:last-child { grid-column: 3; grid-row: 1; }
 .greeting-message-grid .audio-time { grid-column: 2; grid-row: 1; text-align: center; font-size: 10px; }
 .greeting-message-grid .audio-timeline { grid-column: 1 / -1; grid-row: 2; height: 20px; }
+.calendar-settings-panel > .dialog-actions > .calendar-delete-button { margin-right: auto; }
+@media (max-width: 600px) {
+  .calendar-settings-panel > .dialog-actions { flex-wrap: wrap; }
+  .calendar-settings-panel > .dialog-actions > .calendar-delete-button { flex-basis: 100%; margin-right: 0; }
+}
 .personal-share-form { display: grid; gap: 16px; }
 .personal-share-form > label { display: grid; gap: 7px; font-size: 12px; color: var(--primary); }
 .share-recipient-note { line-height: 1.7; }
@@ -9528,9 +9541,7 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
   .participant-list .participant-email { font-size: 9px; }
   .participant-progress { font-size: 10px; }
   .participant-list > li > .button { font-size: 10px; }
-  .recipient-door-cell > .recipient-door.opened > strong { top: 33%; }
-  .recipient-door-cell > .recipient-door.opened > .door-status { top: calc(33% + 13px); }
-  .recipient-door-cell > .door-greeting-shortcut { bottom: 17px; }
+  .recipient-door-cell > .recipient-door.opened > .door-status { top: calc(50% - 32px); }
 }
 @media(max-width:359px) {
   .participant-list,.greeting-message-grid { grid-template-columns: 1fr; }

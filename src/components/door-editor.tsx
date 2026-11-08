@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   DOOR_BLOCKS,
   blockKind,blockDoor,patchDoorBlock,addDoorBlock,remainingBlocks,blockLimit,
@@ -80,7 +80,6 @@ export function DoorEditor({
   const [validationAttempted, setValidationAttempted] = useState(false);
   const allIssues = validationAttempted ? validateDoor(draft) : {};
   const formRef = useRef<HTMLFormElement>(null);
-  const formId = useId();
   const [effectPreview, setEffectPreview] = useState<{
     effect: DoorEffect;
     replay: number;
@@ -450,8 +449,8 @@ export function DoorEditor({
             {isDoorComplete(draft) ? "Klar" : "Under arbeid"}
           </span>
           <button
-            type="submit"
-            form={formId}
+            type="button"
+            onClick={save}
             className="button primary"
             disabled={uploading || audioBusy}
           >
@@ -472,21 +471,22 @@ export function DoorEditor({
               : "Du har endringer som ikke er lagret."}</strong>
             <div>
               <button
+                type="button"
                 className="button secondary small-button"
                 onClick={() => setDiscard(false)}
               >
                 Fortsett å redigere
               </button>
-              <button className="button danger small-button" onClick={onClose}>
+              <button type="button" className="button danger small-button" onClick={onClose}>
                 Forkast endringer
               </button>
             </div>
           </div>
         )}
-        <form id={formId} ref={formRef} noValidate
+        <form ref={formRef} noValidate
           onSubmit={(event) => {
+            // Enter/Done in a quiz field must never save or validate the door.
             event.preventDefault();
-            save();
           }}
         >
           <div className="door-fixed-fields">
@@ -494,7 +494,6 @@ export function DoorEditor({
               Tekst<span className="optional">Valgfritt</span>
               <textarea
                 {...validationAttributes(allIssues, "body")}
-                autoFocus
                 rows={4}
                 maxLength={6000}
                 placeholder="En hilsen, en forklaring eller en liten overraskelse …"

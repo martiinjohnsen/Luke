@@ -1,22 +1,56 @@
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import assert from "node:assert/strict";
-import { fieldScrollOffset } from "../src/lib/dialog-layout.ts";
+import { installDialogLayout } from "../src/lib/dialog-layout.ts";
 
-test("a quiz field hidden beneath the keyboard is moved into the visible dialog area", () => {
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 410 }, { top: 510, bottom: 558 }), 164);
-});
-test("a field already visible stays in place while typing", () => {
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 410 }, { top: 200, bottom: 248 }), 0);
-});
-test("fields above the scroll area are brought back below its fixed header", () => {
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 410 }, { top: 100, bottom: 148 }), -56);
-});
-test("a tall textarea is aligned by its top instead of repeatedly scrolling between its ends", () => {
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 260 }, { top: 180, bottom: 450 }), 24);
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 260 }, { top: 156, bottom: 426 }), 0);
-});
+function layout(t: TestContext, width: number, height: number, touch: boolean) {
+  const originals = ["window", "document"].map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)] as const);
+  const visualViewport = Object.assign(new EventTarget(), { height, offsetTop: 0 });
+  const viewport = Object.assign(new EventTarget(), { innerHeight: height, visualViewport, matchMedia: () => ({ matches: touch }) });
+  const root = { clientWidth: width, clientHeight: height };
+  const values = new Map<string, string>();
+  const dialog = { scrollTop: 128, style: { setProperty: (name: string, value: string) => values.set(name, value) } };
+  Object.defineProperty(globalThis, "window", { configurable: true, value: viewport });
+  Object.defineProperty(globalThis, "document", { configurable: true, value: { documentElement: root } });
+  const stop = installDialogLayout(dialog as unknown as HTMLDialogElement);
+  t.after(() => {
+    stop();
+    for (const [name, original] of originals) {
+      if (original) Object.defineProperty(globalThis, name, original);
+      else Reflect.deleteProperty(globalThis, name);
+    }
+  });
+  const resize = (width: number, height: number) => {
+    root.clientWidth = width;
+    root.clientHeight = viewport.innerHeight = height;
+    viewport.dispatchEvent(new Event("resize"));
+  };
+  return { values, viewport, dialog, resize, stop };
+}
 
-test("focus centers a small field above the pinned footer while resize checks leave typing still", () => {
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 340 }, { top: 320, bottom: 368 }, 16, true), 104);
-  assert.equal(fieldScrollOffset({ top: 140, bottom: 340 }, { top: 216, bottom: 264 }), 0);
+test("opening, panning and closing the mobile keyboard preserves dialog height and manual scroll", t => {
+  const { values, viewport, dialog, resize } = layout(t, 390, 844, true);
+  viewport.visualViewport.height = 380;
+  viewport.visualViewport.offsetTop = 120;
+  viewport.visualViewport.dispatchEvent(new Event("resize"));
+  viewport.visualViewport.dispatchEvent(new Event("scroll"));
+  resize(390, 380);
+  assert.equal(values.get("--dialog-layout-height"), "844px");
+  assert.equal(dialog.scrollTop, 128);
+  resize(390, 844);
+  assert.equal(values.get("--dialog-layout-height"), "844px");
+});
+test("rotating a touch device updates the full dialog height even in wide landscape", t => {
+  const { values, resize } = layout(t, 390, 844, true);
+  resize(844, 390);
+  assert.equal(values.get("--dialog-layout-height"), "390px");
+  resize(844, 220);
+  assert.equal(values.get("--dialog-layout-height"), "390px");
+});
+test("desktop dialogs still adapt to window height and remove their listener on close", t => {
+  const { values, resize, stop } = layout(t, 1200, 900, false);
+  resize(1200, 650);
+  assert.equal(values.get("--dialog-layout-height"), "650px");
+  stop();
+  resize(1200, 800);
+  assert.equal(values.get("--dialog-layout-height"), "650px");
 });

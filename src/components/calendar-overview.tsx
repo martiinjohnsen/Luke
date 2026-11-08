@@ -97,12 +97,12 @@ function CollectedContent({ item }: { item: Keepsake }) {
     case "giftcard":
       return <GiftCardView gift={item.gift} compact />;
     case "video":
-      return <a className="button secondary collection-link" href={item.url} target="_blank" rel="noopener noreferrer"><Icon name="video" size={18} />{item.title || "Se video"}<Icon name="external" size={15} /></a>;
+      return <a className="button secondary collection-link" href={item.url} target="_blank" rel="noopener noreferrer"><Icon name="video" size={18} /><span>{item.title || "Se video"}</span><Icon name="external" size={15} /></a>;
     case "image":
       return <MediaImage className="collection-image" src={item.src} alt={item.alt} loading="lazy" />;
     case "audio":
       return <AudioPlayer src={item.src}/>;
     case "link":
-      return <a className="button secondary collection-link" href={item.url} target="_blank" rel="noopener noreferrer">{item.label}<Icon name="external" size={17} /></a>;
+      return <a className="button secondary collection-link" href={item.url} target="_blank" rel="noopener noreferrer"><span>{item.label}</span><Icon name="external" size={17} /></a>;
   }
 }

@@ -1,16 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { completedCount, type AdventCalendar } from "@/lib/model";
 import { useStore } from "./provider";
 import { Artwork } from "./artwork";
 import { Icon } from "./icons";
-import { Dialog } from "./dialog";
+import { CalendarDeleteDialog } from "./calendar-delete-dialog";
 import { GreetingBadge } from "./greetings";
 import { isReceived, ownerCopy } from "@/lib/calendar-library";
+import { installMenuDismissal } from "@/lib/menu-dismissal";
 export function CalendarCard({ calendar }: { calendar: AdventCalendar }) {
-  const { add, remove, toast, progress, cloud } = useStore();
+  const { add, toast, progress } = useStore();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const menuRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (menuRef.current) return installMenuDismissal(menuRef.current);
+  }, []);
   const received = isReceived(calendar);
   const count =
     received && calendar.remote
@@ -39,17 +44,8 @@ export function CalendarCard({ calendar }: { calendar: AdventCalendar }) {
           </span>
         </Link>
         <details
+          ref={menuRef}
           className="card-menu"
-          onKeyDown={(event) => {
-            if (event.key === "Escape") {
-              event.currentTarget.removeAttribute("open");
-              event.currentTarget.querySelector("summary")?.focus();
-            }
-          }}
-          onBlur={(event) => {
-            if (!event.currentTarget.contains(event.relatedTarget))
-              event.currentTarget.removeAttribute("open");
-          }}
         >
           <summary aria-label={`Flere valg for ${calendar.title}`}>
             <Icon name="more" size={20} />
@@ -57,6 +53,7 @@ export function CalendarCard({ calendar }: { calendar: AdventCalendar }) {
           <div>
             {(!received || !calendar.remote) && (
               <button
+                type="button"
                 onClick={(event) => {
                   const copy = ownerCopy(calendar);
                   if (!add(copy)) return;
@@ -71,6 +68,7 @@ export function CalendarCard({ calendar }: { calendar: AdventCalendar }) {
               </button>
             )}
             <button
+              type="button"
               className="danger-text"
               onClick={(event) => {
                 const menu = event.currentTarget.closest("details");
@@ -131,38 +129,7 @@ export function CalendarCard({ calendar }: { calendar: AdventCalendar }) {
         </div>
       </div>
       {confirmDelete && (
-        <Dialog
-          title={received ? "Fjerne kalenderen?" : "Slette kalenderen?"}
-          onClose={() => setConfirmDelete(false)}
-        >
-          <div className="dialog-content">
-            <p>
-              {received
-                ? `«${calendar.title}» blir fjernet fra listen din. Avsenderen beholder kalenderen.`
-                : cloud
-                  ? `«${calendar.title}» blir slettet fra kontoen din. Mottakerne mister også tilgangen. Last ned en sikkerhetskopi hvis du vil beholde innholdet.`
-                  : `«${calendar.title}» blir fjernet fra denne enheten. Last gjerne ned en sikkerhetskopi først.`}
-            </p>
-            <div className="dialog-actions">
-              <button
-                className="button secondary"
-                onClick={() => setConfirmDelete(false)}
-              >
-                Behold kalenderen
-              </button>
-              <button
-                className="button danger"
-                onClick={() => {
-                  if (!remove(calendar.id)) return;
-                  setConfirmDelete(false);
-                  toast(received ? "Kalenderen er fjernet fra dine kalendere." : "Kalenderen er slettet.");
-                }}
-              >
-                {received ? "Fjern kalender" : "Slett kalender"}
-              </button>
-            </div>
-          </div>
-        </Dialog>
+        <CalendarDeleteDialog calendar={calendar} onClose={() => setConfirmDelete(false)} />
       )}
     </article>
   );
