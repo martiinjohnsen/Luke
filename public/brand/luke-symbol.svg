@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none"><title>Luke · lukket luke 24</title>
+  <defs>
+    <linearGradient id="tile-one" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#b39ac2"/><stop offset="1" stop-color="#a98ab9"/></linearGradient>
+    <linearGradient id="tile-two" x1="52" y1="0" x2="100" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#d8c4e0"/><stop offset="1" stop-color="#cbb2d5"/></linearGradient>
+    <linearGradient id="tile-three" x1="0" y1="52" x2="48" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#cdb7d8"/><stop offset="1" stop-color="#bea2cd"/></linearGradient>
+    <linearGradient id="closed-door" x1="52" y1="52" x2="100" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#80558a"/><stop offset="1" stop-color="#704477"/></linearGradient>
+  </defs>
+  <rect x="0" y="0" width="48" height="48" rx="11" fill="url(#tile-one)"/>
+  <rect x="52" y="0" width="48" height="48" rx="11" fill="url(#tile-two)"/>
+  <rect x="0" y="52" width="48" height="48" rx="11" fill="url(#tile-three)"/>
+  <rect x="52" y="52" width="48" height="48" rx="11" fill="url(#closed-door)"/>
+  <text x="76" y="87" text-anchor="middle" fill="#fff0cb" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="32">24</text>
+</svg>

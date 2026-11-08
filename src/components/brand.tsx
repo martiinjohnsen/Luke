@@ -3,7 +3,7 @@ export function BrandLogo({ className = "" }: { className?: string }) {
   return (
     <img
       className={`brand-logo ${className}`}
-      src="/brand/luke-lockup.svg"
+      src="/brand/luke-lockup-v3.svg"
       width={266}
       height={106}
       alt="Luke"

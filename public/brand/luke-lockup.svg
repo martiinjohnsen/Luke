@@ -1,19 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 266 106" fill="none">
   <title>Luke</title>
+  <g transform="translate(2 6) scale(.91)">
   <defs>
-    <linearGradient id="tile-one" x1="2" y1="6" x2="44" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#b79bc9"/><stop offset="1" stop-color="#a988bc"/></linearGradient>
-    <linearGradient id="tile-two" x1="51" y1="6" x2="93" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#e1ccea"/><stop offset="1" stop-color="#d1b3dd"/></linearGradient>
-    <linearGradient id="tile-three" x1="2" y1="54" x2="44" y2="96" gradientUnits="userSpaceOnUse"><stop stop-color="#ccb4db"/><stop offset="1" stop-color="#b89acb"/></linearGradient>
-    <linearGradient id="open-door" x1="55" y1="56" x2="98" y2="101" gradientUnits="userSpaceOnUse"><stop stop-color="#82548f"/><stop offset="1" stop-color="#653b72"/></linearGradient>
+    <linearGradient id="tile-one" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#b39ac2"/><stop offset="1" stop-color="#a98ab9"/></linearGradient>
+    <linearGradient id="tile-two" x1="52" y1="0" x2="100" y2="48" gradientUnits="userSpaceOnUse"><stop stop-color="#d8c4e0"/><stop offset="1" stop-color="#cbb2d5"/></linearGradient>
+    <linearGradient id="tile-three" x1="0" y1="52" x2="48" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#cdb7d8"/><stop offset="1" stop-color="#bea2cd"/></linearGradient>
+    <linearGradient id="closed-door" x1="52" y1="52" x2="100" y2="100" gradientUnits="userSpaceOnUse"><stop stop-color="#80558a"/><stop offset="1" stop-color="#704477"/></linearGradient>
   </defs>
-  <rect x="2" y="6" width="42" height="42" rx="12" fill="url(#tile-one)"/>
-  <rect x="51" y="6" width="42" height="42" rx="12" fill="url(#tile-two)"/>
-  <rect x="2" y="54" width="42" height="42" rx="12" fill="url(#tile-three)"/>
-  <rect x="51" y="54" width="42" height="42" rx="12" fill="#ffe099"/>
-  <path d="M67 61L87 56Q98 53 98 65V86Q98 96 87 99L67 104Q58 106 58 94V74Q58 64 67 61Z" fill="url(#open-door)"/>
-  <g transform="matrix(1 -0.2 0 1 60 65)">
-    <text x="3" y="29" fill="#fff0cb" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="29" textLength="30" lengthAdjust="spacingAndGlyphs">24</text>
-  </g>
+  <rect x="0" y="0" width="48" height="48" rx="11" fill="url(#tile-one)"/>
+  <rect x="52" y="0" width="48" height="48" rx="11" fill="url(#tile-two)"/>
+  <rect x="0" y="52" width="48" height="48" rx="11" fill="url(#tile-three)"/>
+  <rect x="52" y="52" width="48" height="48" rx="11" fill="url(#closed-door)"/>
+  <text x="76" y="87" text-anchor="middle" fill="#fff0cb" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="32">24</text></g>
   <text x="109" y="78" fill="#4d254f" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="70">luke</text>
   <circle cx="258" cy="72.5" r="5.6" fill="#b580ac"/>
 </svg>

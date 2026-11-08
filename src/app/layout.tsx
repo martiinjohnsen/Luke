@@ -17,10 +17,10 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, statusBarStyle: "default", title: "Luke" },
   icons: {
     icon: [
-      { url: "/icons/luke-favicon-v2.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/luke-192-v2.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/luke-favicon-v3.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/luke-192-v3.png", sizes: "192x192", type: "image/png" },
     ],
-    apple: "/icons/luke-apple-touch-v2.png",
+    apple: "/icons/luke-apple-touch-v3.png",
   },
   robots: { index: false, follow: false },
 };
