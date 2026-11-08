@@ -1,5 +1,5 @@
 import type { quizSummary } from './quiz-progress.ts';
-export type Participant={id:string;name:string;self:boolean;joinedAt:string;openedCount:number;opened:number[];summary:ReturnType<typeof quizSummary>};
+export type Participant={id:string;name:string;email?:string;self:boolean;joinedAt:string;openedCount:number;opened:number[];summary:ReturnType<typeof quizSummary>};
 export type Participants={owner:boolean;available:number;participants:Participant[]};
 /** Equal scores share a position. Answer speed and participation never break a tie. */
 export function leaderboard(people:readonly Participant[]) {

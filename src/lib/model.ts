@@ -542,8 +542,14 @@ export function blockQuestionOffset(door:Door,id:DoorBlockId,calendar?:AdventCal
 export function patchDoorBlock(door:Door,id:DoorBlockId,patch:Partial<Door>):Door {
   return id.includes(":") ? {...door,extra:{...door.extra,[id]:{...blockDoor(door,id),...patch}}} : {...door,...patch};
 }
-export function remainingBlocks(door:Door,kind:RepeatableBlockKind):number {return 3-doorBlockOrder(door).filter(id=>blockKind(id)===kind).length;}
+export function blockLimit(kind:RepeatableBlockKind):number {
+  return ["giftcard","image","audio"].includes(kind) ? 3 : 1;
+}
+export function remainingBlocks(door:Door,kind:RepeatableBlockKind):number {
+  return Math.max(0,blockLimit(kind)-doorBlockOrder(door).filter(id=>blockKind(id)===kind).length);
+}
 export function addDoorBlock(door:Door,kind:RepeatableBlockKind,patch:Partial<Door>):{door:Door;id:DoorBlockId}|null {
+  if(!remainingBlocks(door,kind)) return null;
   const order=doorBlockOrder(door);
   const id=([kind,`${kind}:2`,`${kind}:3`] as DoorBlockId[]).find(id=>!order.includes(id));
   if(!id) return null;

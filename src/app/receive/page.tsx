@@ -11,7 +11,7 @@ import { BrandLogo } from "@/components/brand";
 import { useStore } from "@/components/provider";
 import { useAccount } from "@/components/account-provider";
 import { inviteToken } from "@/lib/cloud/workspace";
-import { rpcForUser, authMessage } from "@/lib/cloud/client";
+import { rpcForUser, authMessage, supabase } from "@/lib/cloud/client";
 export default function ReceivePage() {
   const [hash, setHash] = useState<string | null>(null);
   useEffect(() => {
@@ -33,7 +33,18 @@ function LinkedReceive({ token }: { token: string }) {
   const account = useAccount(),
     store = useStore(),
     router = useRouter();
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""),[switching,setSwitching]=useState(false);
+  async function chooseAccount() {
+    setSwitching(true);
+    try {
+      await store.syncNow();
+      try {localStorage.setItem("luke:pending-invite",token);} catch {}
+      const {data,error}=await supabase().auth.signInWithOAuth({provider:"google",options:{redirectTo:`${location.origin}/settings`,skipBrowserRedirect:true,queryParams:{prompt:"select_account"}}});
+      if(error) throw error;
+      if(!data.url) throw new Error("Kunne ikke åpne Google. Prøv igjen.");
+      location.assign(data.url);
+    } catch(error) {setError(authMessage(error));setSwitching(false);}
+  }
   useEffect(() => {
     try {
       localStorage.setItem("luke:pending-invite", token);
@@ -41,6 +52,7 @@ function LinkedReceive({ token }: { token: string }) {
   }, [token]);
   useEffect(() => {
     if (!account.user) return;
+    setError("");
     let active = true;
     void (async () => {
       await store.syncNow();
@@ -95,6 +107,8 @@ function LinkedReceive({ token }: { token: string }) {
             <Icon name="user" size={18} />
           </Link>
         )}
+        {error && account.user && <button type="button" className="button primary full" disabled={switching} onClick={()=>void chooseAccount()}><Icon name="user" size={17}/>{switching ? "Åpner Google …" : "Velg en annen Google-konto"}</button>}
+        {error && !account.user && <Link href="/settings" className="button primary full">Til innlogging</Link>}
         <Link href="/calendars" className="button secondary full">
           Til Mine kalendere
         </Link>

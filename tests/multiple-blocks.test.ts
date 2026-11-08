@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {emptyDoor,addDoorBlock,patchDoorBlock,removeDoorBlock,doorBlockOrder,blockDoor,remainingBlocks,isCalendar,createCalendar,questionsForDoor,blockQuestionOffset,isDoorComplete,parseBackup} from '../src/lib/model.ts';
+import {emptyDoor,addDoorBlock,patchDoorBlock,removeDoorBlock,doorBlockOrder,blockDoor,remainingBlocks,isCalendar,createCalendar,questionsForDoor,blockQuestionOffset,isDoorComplete,parseBackup,blockLimit,type Door} from '../src/lib/model.ts';
 import {initialData} from '../src/lib/templates.ts';
 import {ownedDocument} from '../src/lib/cloud/workspace.ts';
 import {questionKey,quizSummary} from '../src/lib/quiz-progress.ts';
@@ -11,22 +11,25 @@ import {shuffledDoors} from '../src/lib/door-layout.ts';
 import {leaderboard,type Participant} from '../src/lib/participants.ts';
 const question={title:'Farge?',options:['Lilla','Grønn'],answerIndex:0,explanation:'Lilla'};
 const make=()=>createCalendar({title:'Min kalender',recipient:'Deg',sender:'Meg',year:2025,theme:'advent'});
-test('three independent slots keep draggable order, remaining counts and attachments after round-trip',()=>{
+test('three independent images keep draggable order, remaining counts and attachments after round-trip',()=>{
   const calendar=make();let door=emptyDoor(1);
-  for(let n=1;n<=3;n++){door=addDoorBlock(door,'link',{link:{label:`Lenke ${n}`,url:`https://example.com/${n}`}})!.door;assert.equal(remainingBlocks(door,'link'),3-n);}
-  assert.equal(addDoorBlock(door,'link',{}),null);
-  door.contentOrder=['link:3','link','link:2'];calendar.doors[0]=door;
+  for(let n=1;n<=3;n++){door=addDoorBlock(door,'image',{image:'data:image/png;base64,AAAA',imageAlt:`Bilde ${n}`})!.door;assert.equal(remainingBlocks(door,'image'),3-n);}
+  assert.equal(addDoorBlock(door,'image',{}),null);
+  door.contentOrder=['image:3','image','image:2'];calendar.doors[0]=door;
   assert.equal(isCalendar(calendar),true);assert.equal(isDoorComplete(door),true);
   const restored=parseBackup(JSON.stringify({...initialData(),calendars:[calendar]})).calendars[0];assert.deepEqual(restored.doors[0],door);
-  const items=calendarCollection(restored,[1],24);assert.deepEqual(items.map(i=>i.id),['1-link:3','1-link','1-link:2']);
-  const removed=removeDoorBlock(door,'link:2');assert.deepEqual(doorBlockOrder(removed),['link:3','link']);assert.equal(remainingBlocks(removed,'link'),1);
-  assert.equal(blockDoor(door,'link:2').link?.label,'Lenke 2');assert.equal(remainingBlocks(door,'link'),0);
-  assert.equal(addDoorBlock(removed,'link',{link:{label:'Ny',url:'https://example.com'}})!.id,'link:2');
+  const items=calendarCollection(restored,[1],24);assert.deepEqual(items.map(i=>i.id),['1-image:3','1-image','1-image:2']);
+  const removed=removeDoorBlock(door,'image:2');assert.deepEqual(doorBlockOrder(removed),['image:3','image']);assert.equal(remainingBlocks(removed,'image'),1);
+  assert.equal(blockDoor(door,'image:2').imageAlt,'Bilde 2');assert.equal(remainingBlocks(door,'image'),0);
+  assert.equal(addDoorBlock(removed,'image',{image:'data:image/png;base64,AAAA'})!.id,'image:2');
 });
-test('additional quiz boxes preserve original question keys and use fixed offsets despite visual reorders',()=>{
+test('previously saved additional quiz boxes preserve original question keys and use fixed offsets despite visual reorders',()=>{
   const calendar=make();const original={...emptyDoor(1),questions:[question]};const key=questionKey(1,0,question);
-  let door=addDoorBlock(original,'quiz',{questions:[question]})!.door;
-  door=addDoorBlock(door,'quiz',{questions:[{...question,title:'Andre?'}]})!.door;calendar.doors[0]=door;
+  const door:Door={...original,contentOrder:['quiz','quiz:2','quiz:3'],extra:{
+    'quiz:2':{...emptyDoor(1),contentOrder:['quiz'],questions:[question]},
+    'quiz:3':{...emptyDoor(1),contentOrder:['quiz'],questions:[{...question,title:'Andre?'}]}
+  }};calendar.doors[0]=door;
+  assert.equal(isCalendar(calendar),true);assert.equal(remainingBlocks(door,'quiz'),0);assert.equal(addDoorBlock(door,'quiz',{}),null);
   assert.equal(questionsForDoor(door,calendar).length,3);assert.equal(blockQuestionOffset(door,'quiz:3',calendar),2);
   door.contentOrder=['quiz:3','quiz:2','quiz'];assert.equal(questionKey(1,0,questionsForDoor(door,calendar)[0]),key);
   assert.equal(quizSummary(calendar,{[key]:{answer:0}}).correct,1);
@@ -47,7 +50,7 @@ test('extra media is staged and migrated with its slot intact, without mutating 
   assert.equal(staged.data.calendars[0].doors[0].audio,'');assert.equal(blockDoor(staged.data.calendars[0].doors[0],'audio:2').audio,'');assert.deepEqual(c,before);assert.equal(isCalendar(staged.data.calendars[0]),true);
 });
 test('invalid fourth slots, nested extras and hidden content are rejected without invalidating legacy data',()=>{
-  const c=make();c.doors[0]=addDoorBlock({...emptyDoor(1),link:{label:'En',url:'https://example.com'}},'link',{link:{label:'To',url:'https://example.com'}})!.door;
+  const c=make();c.doors[0]={...emptyDoor(1),link:{label:'En',url:'https://example.com'},contentOrder:['link','link:2'],extra:{'link:2':{...emptyDoor(1),contentOrder:['link'],link:{label:'To',url:'https://example.com'}}}};
   assert.equal(isCalendar(c),true);
   const fourth=structuredClone(c);(fourth.doors[0].extra as Record<string,unknown>)['link:4']=emptyDoor(1);assert.equal(isCalendar(fourth),false);
   const nested=structuredClone(c);nested.doors[0].extra!['link:2']!.extra={};assert.equal(isCalendar(nested),false);
@@ -62,7 +65,7 @@ test('leaderboard ties share a rank and source snapshots retain their original o
   const p=(id:string,correct:number)=>({id,name:id,summary:{total:4,correct,answered:4,unlocked:4,days:[]},self:false,opened:[],openedCount:0,joinedAt:''}) satisfies Participant;
   const people=[p('C',1),p('B',3),p('A',3)];assert.deepEqual(leaderboard(people).map(({person,rank})=>[person.id,rank]),[['A',1],['B',1],['C',3]]);assert.deepEqual(people.map(p=>p.id),['C','B','A']);
 });
-test('all seven add-menu types support three independent boxes and share the same backup/rendering rules',()=>{
+test('only gifts, images and audio allow three boxes while other add-menu types allow one',()=>{
   const c=make();let d=emptyDoor(1);
   const patches={
     giftcard:{giftCard:{merchant:'Butikk',amount:100,currency:'NOK',code:'CODE',url:'',expiresOn:''}},
@@ -70,10 +73,10 @@ test('all seven add-menu types support three independent boxes and share the sam
     video:{videoUrl:'https://www.youtube.com/watch?v=dQw4w9WgXcQ'},
     link:{link:{label:'Lenke',url:'https://example.com'}},quiz:{questions:[question]},activity:{activity:{title:'Tur',body:'Ta en tur'}}
   } satisfies Record<string,Partial<typeof d>>;
-  for(const kind of Object.keys(patches) as (keyof typeof patches)[]) for(let n=0;n<3;n++) d=addDoorBlock(d,kind,structuredClone(patches[kind]))!.door;
-  c.doors[0]=d;assert.equal(doorBlockOrder(d).length,21);assert.equal(isCalendar(c),true);assert.equal(isDoorComplete(d),true);assert.deepEqual(validateDoor(d),{});
+  for(const kind of Object.keys(patches) as (keyof typeof patches)[]) for(let n=0;n<blockLimit(kind);n++) d=addDoorBlock(d,kind,structuredClone(patches[kind]))!.door;
+  c.doors[0]=d;assert.equal(doorBlockOrder(d).length,13);assert.equal(isCalendar(c),true);assert.equal(isDoorComplete(d),true);assert.deepEqual(validateDoor(d),{});
   assert.deepEqual(parseBackup(JSON.stringify({...initialData(),calendars:[c]})).calendars[0].doors[0],d);
-  assert.equal(calendarCollection(c,[1],24).length,18);
+  assert.equal(calendarCollection(c,[1],24).length,12);
   for(const kind of Object.keys(patches) as (keyof typeof patches)[]) {assert.equal(remainingBlocks(d,kind),0);assert.equal(addDoorBlock(d,kind,{}),null);}
-  assert.equal(questionsForDoor(d,c).length,3);
+  assert.equal(questionsForDoor(d,c).length,1);
 });

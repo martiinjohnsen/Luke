@@ -18,7 +18,7 @@ export default function PrivacyPage() {
         </section>
         <section>
           <h2><Icon name="share" size={19} /> Når du deler en kalender</h2>
-          <p>En mottaker åpner invitasjonen og logger inn med sin egen konto. Alle som får invitasjonslenken, kan bruke den til å få mottakertilgang. Mottakeren kan åpne kalenderen og svare på quiz, men kan ikke redigere innholdet ditt. Avsender ser hvem som har kalenderen, åpnet fremdrift og quizresultater per mottaker. Når flere har samme kalender, kan de se hverandres profilnavn og samlede quizpoeng i resultatlisten, men ikke hverandres svar. Hvis tilgangen fjernes, beholdes fremdrift og førsteforsøk slik at de fortsatt gjelder ved en ny invitasjon.</p>
+          <p>En mottaker åpner invitasjonen og logger inn med sin egen konto. Nye invitasjoner knyttes til mottakerens e-postadresse og kan bare hentes av den aktuelle, bekreftede Google-kontoen. Eldre delingslenker virker fortsatt som før til avsender avslutter delingen. Mottakeren kan åpne kalenderen og svare på quiz, men kan ikke redigere innholdet ditt. Avsender ser mottakernes profilnavn og e-postadresse, åpnet fremdrift og quizresultater per mottaker. Når flere har samme kalender, kan de se hverandres profilnavn og samlede quizpoeng i resultatlisten, men ikke hverandres svar. Hvis tilgangen fjernes, beholdes fremdrift og førsteforsøk slik at de fortsatt gjelder ved en ny invitasjon.</p>
         </section>
         <section>
           <h2><Icon name="mic" size={19} /> Bilder, lyd og hilsener tilbake</h2>

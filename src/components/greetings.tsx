@@ -8,6 +8,8 @@ import { useAccount } from "./account-provider";
 import { useStore } from "./provider";
 import { useGreetings, type Greeting, type PreviewGreeting } from "./greetings-provider";
 import { sameGreeting, greetingsForCalendar } from "@/lib/greetings";
+import type { Participant } from "@/lib/participants";
+import { PersonFilters } from "./person-filters";
 import { Dialog } from "./dialog";
 import { Icon } from "./icons";
 import { AudioInput } from "./audio-input";
@@ -66,12 +68,12 @@ function GreetingForm({calendarId,day,userId,record,onClose,preview}:{calendarId
     {error && <p className="form-error" role="alert">{error}</p>}
   </form></Dialog>;
 }
-export function GreetingInbox({calendarId}:{calendarId:string}) {
+export function GreetingInbox({calendarId,participants=[]}:{calendarId:string;participants?:readonly Participant[]}) {
   const greetings=useGreetings();
   const [open,setOpen]=useState(false),[error,setError]=useState(""),[visibleCount,setVisibleCount]=useState(12);
   const [sender,setSender]=useState("all");
   const items=greetingsForCalendar(greetings.items,calendarId);
-  const senders=[...new Map(items.map(item=>[item.userId,{id:item.userId,name:item.previewMode ? "Mine prøvehilsener" : item.name}])).values()];
+  const senders=[...new Map([...participants.map(person=>[person.id,{id:person.id,name:person.name}] as const),...items.map(item=>[item.userId,{id:item.userId,name:item.previewMode ? "Mine prøvehilsener" : item.name}] as const)]).values()].map(person=>({...person,count:items.filter(item=>item.userId===person.id).length}));
   const filtered=sender==="all" ? items : items.filter(item=>item.userId===sender);
   const unread=items.filter(item=>item.revision>item.seenRevision);
   const visible=filtered.slice(0,visibleCount);
@@ -82,12 +84,12 @@ export function GreetingInbox({calendarId}:{calendarId:string}) {
   return <section className="greeting-inbox" id="hilsener">
     <button type="button" className="button secondary greeting-inbox-toggle" aria-expanded={open} onClick={()=>setOpen(!open)}><Icon name="message" size={18}/><strong>Hilsener tilbake</strong><span>{unread.length ? `${unread.length} nye` : items.length || ""}</span><Icon name="chevron" size={16}/></button>
     {open && <div className="greeting-inbox-content">
-      {senders.length>1 && <label className="greeting-sender-filter">Hilsener fra<select value={sender} onChange={event=>{setSender(event.target.value);setVisibleCount(12);}}><option value="all">Alle</option>{senders.map(person=><option key={person.id} value={person.id}>{person.name}</option>)}</select></label>}
+      {!!senders.length && <PersonFilters people={senders} value={sender} total={items.length} onChange={id=>{setSender(id);setVisibleCount(12);}} label="Velg hvem hilsenene er fra"/>}
       {(error || greetings.error) && <p className="form-error" role="alert">{error || greetings.error}</p>}
-      {!items.length ? <p className="field-help">Hilsener fra mottakeren og dine egne prøvehilsener dukker opp her.</p> : visible.map(item=><article className="greeting-message" key={`${item.userId}:${item.day}:${item.previewMode ?? "recipient"}:${item.temporary ?? false}`}>
+      {!items.length ? <p className="field-help">Hilsener fra mottakeren og dine egne prøvehilsener dukker opp her.</p> : !filtered.length ? <p className="field-help">Ingen hilsener fra denne personen ennå.</p> : <div className="greeting-message-grid">{visible.map(item=><article className="greeting-message" key={`${item.userId}:${item.day}:${item.previewMode ?? "recipient"}:${item.temporary ?? false}`}>
         <header><strong>{item.previewMode ? "Prøvehilsen fra deg" : `Hilsen fra ${item.name}`}</strong><span>{item.day}. desember</span><time dateTime={item.updatedAt}>{new Date(item.updatedAt).toLocaleDateString("nb-NO",{day:"numeric",month:"short"})}</time></header>
         {item.body && <p>{item.body}</p>}{item.image && <MediaImage src={item.image} alt={`Et bilde fra ${item.name}`} loading="lazy"/>}{item.audio && <AudioPlayer src={item.audio} label={`Lydhilsen fra ${item.name}`}/>}
-      </article>)}
+      </article>)}</div>}
       {filtered.length>visibleCount && <button type="button" className="button secondary" onClick={()=>setVisibleCount(visibleCount+12)}>Vis flere hilsener</button>}
     </div>}
   </section>;

@@ -8,7 +8,7 @@ import { Artwork } from "./artwork";
 import { DoorEditor } from "./door-editor";
 import { ShareDialog } from "./share-dialog";
 import { AppearancePicker } from "./appearance-picker";
-import { OwnerParticipants } from "./calendar-participants";
+import { OwnerParticipants, useParticipants } from "./calendar-participants";
 import { GreetingInbox } from "./greetings";
 import {
   completedCount,
@@ -23,8 +23,23 @@ import {
   questionsForDoor,
   type AdventCalendar,
   type Door,
+  type DoorBlockKind,
 } from "@/lib/model";
 import { isReceived, ownerCopy } from "@/lib/calendar-library";
+
+function doorContentLabel(door: Door): string {
+  const counts = new Map<DoorBlockKind, number>();
+  for (const id of doorBlockOrder(door)) {
+    const kind = blockKind(id);
+    if (kind !== "effect") counts.set(kind, (counts.get(kind) ?? 0) + 1);
+  }
+  const labels = [...counts].map(([kind, count]) =>
+    `${blockNames[kind]}${count > 1 ? ` × ${count}` : ""}`,
+  );
+  if (door.body.trim()) labels.unshift("Tekst");
+  return labels.join(" · ") || kindInfo[door.kind].name;
+}
+
 export function CalendarEditor({ id }: { id: string }) {
   const store = useStore(),
     router = useRouter();
@@ -34,6 +49,7 @@ export function CalendarEditor({ id }: { id: string }) {
     [filter, setFilter] = useState("all"),
     [editing, setEditing] = useState<number | null>(null),
     [share, setShare] = useState(false);
+  const participants=useParticipants(id,store.cloud && !!calendar && !isReceived(calendar));
   if (!store.cloud)
     return (
       <div className="empty-state">
@@ -172,8 +188,8 @@ export function CalendarEditor({ id }: { id: string }) {
           </button>
         </div>
       </div>
-      <OwnerParticipants calendar={calendar} onOpenDoor={setEditing}/>
-      <GreetingInbox calendarId={calendar.id}/>
+      <OwnerParticipants calendar={calendar} onOpenDoor={setEditing} source={participants}/>
+      <GreetingInbox calendarId={calendar.id} participants={participants.data?.participants ?? []}/>
       {calendar.demo && (
         <div className="example-notice">
           <span>Eksempelkalender</span>
@@ -245,15 +261,7 @@ export function CalendarEditor({ id }: { id: string }) {
                     <strong>{door.day}</strong>
                     <span className="door-type">
                       <span>
-                        {partial
-                          ? door.contentOrder
-                            ? doorBlockOrder(door)
-                                .filter((block) => block !== "effect")
-                                .map((block) => blockNames[blockKind(block)])
-                                .slice(0, 2)
-                                .join(" · ") || "Hilsen"
-                            : kindInfo[door.kind].name
-                          : "Legg til"}
+                        {partial ? doorContentLabel(door) : "Legg til"}
                       </span>
                     </span>
                   </button>

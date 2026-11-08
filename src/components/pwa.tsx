@@ -21,6 +21,7 @@ export function PwaProvider({ children }: { children: ReactNode }) {
   const [installed, setInstalled] = useState(false);
   const [guide, setGuide] = useState(false);
   const [offline, setOffline] = useState(false);
+  const [canShare,setCanShare]=useState(false),[shareError,setShareError]=useState(""),[sharing,setSharing]=useState(false);
   useEffect(() => {
     const handler = (event: Event) => {
       event.preventDefault();
@@ -35,8 +36,9 @@ export function PwaProvider({ children }: { children: ReactNode }) {
     window.addEventListener("appinstalled", done);
     window.addEventListener("online", network);
     window.addEventListener("offline", network);
-    setInstalled(window.matchMedia("(display-mode: standalone)").matches);
+    setInstalled(window.matchMedia("(display-mode: standalone)").matches || !!(navigator as Navigator & {standalone?:boolean}).standalone);
     network();
+    setCanShare(typeof navigator.share==="function");
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production")
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
@@ -57,6 +59,12 @@ export function PwaProvider({ children }: { children: ReactNode }) {
         setPrompt(null);
       }
     } else setGuide(true);
+  }
+  async function openShareMenu() {
+    setShareError("");setSharing(true);
+    try {await navigator.share({title:"Luke",url:`${location.origin}/calendars`});}
+    catch(error){if(!(error instanceof DOMException && error.name==="AbortError")) setShareError("Delingsmenyen kunne ikke åpnes. Bruk Del i nettlesermenyen i stedet.");}
+    finally{setSharing(false);}
   }
   return (
     <InstallContext.Provider value={{ install, installed }}>
@@ -80,9 +88,11 @@ export function PwaProvider({ children }: { children: ReactNode }) {
             <div className="info-box">
               <strong>iPhone eller iPad</strong>
               <p>
-                Åpne i Safari. Trykk Del, velg «Legg til på Hjem-skjerm» og
-                deretter «Legg til».
+                Åpne Safari-menyen ved adresselinjen, trykk Del og velg «Legg til på Hjem-skjerm». Bekreft med «Legg til».
               </p>
+              {canShare && <button type="button" className="button secondary full" disabled={sharing} onClick={()=>void openShareMenu()}><Icon name="share" size={17}/>{sharing ? "Åpner …" : "Åpne delingsmenyen"}</button>}
+              <p className="field-help">Hvis «Legg til på Hjem-skjerm» ikke vises her, bruk Del i Safari-menyen. Du bekrefter selv når appen skal legges til.</p>
+              {shareError && <p className="form-error" role="alert">{shareError}</p>}
             </div>
             <div className="info-box">
               <strong>Android og Chrome</strong>
@@ -91,11 +101,6 @@ export function PwaProvider({ children }: { children: ReactNode }) {
                 startskjermen».
               </p>
             </div>
-            <p className="muted small">
-              Installasjon krever at siden er publisert med HTTPS, eller at den
-              kjøres på localhost. Nettleseren bestemmer når installasjonsvalget
-              vises.
-            </p>
             <button
               className="button primary full"
               onClick={() => setGuide(false)}

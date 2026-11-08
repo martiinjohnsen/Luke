@@ -2,7 +2,7 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
   DOOR_BLOCKS,
-  blockKind,blockDoor,patchDoorBlock,addDoorBlock,remainingBlocks,
+  blockKind,blockDoor,patchDoorBlock,addDoorBlock,remainingBlocks,blockLimit,
   blockNames,
   doorBlockOrder,
   removeDoorBlock,
@@ -526,7 +526,7 @@ export function DoorEditor({
                     onClick={() => add(block)}
                   >
                     <Icon name={blockIcons[block]} size={16} />
-                    {blockNames[block]} <span className="add-block-count">{remainingBlocks(draft,block)}</span>
+                    {blockNames[block]} {blockLimit(block)>1 && <span className="add-block-count">{remainingBlocks(draft,block)}</span>}
                   </button>
                 ))}
             </div>
