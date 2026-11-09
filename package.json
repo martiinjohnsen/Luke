@@ -12,10 +12,12 @@
     "test:database": "node tests/database.mjs"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^10.2.1",
     "@supabase/supabase-js": "^2.119.0",
     "next": "16.4.5",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "stripe": "^23.1.0"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.15",

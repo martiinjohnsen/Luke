@@ -1,5 +1,5 @@
 /* Cache only the public shell. Account data never enters the service-worker cache. */
-const CACHE = "luke-shell-2026-11-08-mobile-editing-v23";
+const CACHE = "luke-shell-2026-11-09-paid-sharing-v24";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -54,6 +54,7 @@ self.addEventListener("fetch", (event) => {
   if (
     request.method !== "GET" ||
     url.origin !== self.location.origin ||
+    url.pathname.startsWith("/api/") ||
     url.searchParams.has("_rsc") ||
     request.headers.has("RSC")
   )

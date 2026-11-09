@@ -9521,11 +9521,58 @@ label.button:has(input:focus-visible) { outline: 3px solid #b09ac6; outline-offs
 .greeting-message-grid .audio-time { grid-column: 2; grid-row: 1; text-align: center; font-size: 10px; }
 .greeting-message-grid .audio-timeline { grid-column: 1 / -1; grid-row: 2; height: 20px; }
 .calendar-settings-panel > .dialog-actions > .calendar-delete-button { margin-right: auto; }
+.auto-textarea { overflow-y: hidden; resize: none; max-height: none; }
 @media (max-width: 600px) {
-  .calendar-settings-panel > .dialog-actions { flex-wrap: wrap; }
-  .calendar-settings-panel > .dialog-actions > .calendar-delete-button { flex-basis: 100%; margin-right: 0; }
+  .calendar-settings-panel > .dialog-actions { display: grid; grid-template-columns: 38px auto minmax(0,1fr); gap: 7px; padding: 10px; }
+  .calendar-settings-panel > .dialog-actions > .button { min-width: 0; padding: 10px 9px; }
+  .calendar-settings-panel > .dialog-actions > .calendar-delete-button { width: 38px; height: 38px; min-height: 38px; margin: 0; padding: 0; }
+  .calendar-delete-button > span { display: none; }
 }
 .personal-share-form { display: grid; gap: 16px; }
+.share-plans-content, .share-checkout-content { padding: 24px; }
+.share-plan-intro { margin: 0 0 20px; color: var(--muted); line-height: 1.7; }
+.share-plan-intro strong { color: var(--ink); }
+.share-plans { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
+.share-plan { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; text-align: left; padding: 24px; border: 1px solid var(--control-edge); border-radius: 20px; background: linear-gradient(145deg,#ffffffa6,#eee5f14d); box-shadow: var(--control-shadow); color: var(--ink); }
+.share-plan-icon { display: grid; place-items: center; width: 45px; height: 45px; border-radius: 14px; background: var(--primary-pale); color: var(--primary); margin-bottom: 17px; }
+.share-plan-name { font-size: 17px; font-weight: 600; }
+.share-plan-price { font: 44px/1.25 var(--serif); color: var(--primary-dark); margin-top: 10px; }
+.share-plan-once { font-size: 10px; color: var(--muted); }
+.share-plan-detail { font-size: 12px; line-height: 1.65; margin: 18px 0; color: var(--muted); }
+.share-plan-features { display: grid; gap: 10px; font-size: 11px; line-height: 1.5; margin: 0 0 24px; }
+.share-plan-features > span { display: flex; align-items: flex-start; gap: 7px; }
+.share-plan-features svg { flex-shrink: 0; color: var(--primary); margin-top: 1px; }
+.share-plan-action { display: flex; align-items: center; justify-content: space-between; gap: 7px; align-self: stretch; margin-top: auto; border-radius: 11px; padding: 12px; background: var(--choice-fill); color: var(--primary-dark); font-size: 11px; font-weight: 600; }
+.share-purchase-note { display: flex; align-items: flex-start; gap: 8px; color: var(--muted); font-size: 11px; line-height: 1.7; margin: 20px 0 0; }
+.share-purchase-note > svg { flex-shrink: 0; margin-top: 2px; }
+.share-package-tabs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-bottom: 20px; }
+.share-package-tabs > .button { justify-content: space-between; padding: 11px 14px; font-size: 12px; }
+.share-package-tabs > .button[aria-pressed=true] { background: var(--choice-fill); border-color: var(--control-edge); }
+.share-package-tabs strong { font-weight: 600; white-space: nowrap; }
+.share-checkout-content > p { color: var(--muted); font-size: 12px; line-height: 1.7; margin-bottom: 20px; }
+.share-checkout { margin-top: 18px; min-width: 0; }
+.share-checkout > div:first-of-type { width: 100%; }
+.share-checkout iframe { max-width: 100%; }
+.share-paid { display: flex; align-items: center; gap: 8px; margin: 0; padding: 12px 14px; background: var(--primary-pale); color: var(--primary-dark); border-radius: 12px; font-size: 13px; }
+.share-purchases { margin: 24px 0; }
+.share-purchases h4 { margin: 0 0 10px; font-size: 13px; }
+.share-purchases > div { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-top: 8px; }
+.share-purchases > div > div { min-width: 0; flex: 1; display: grid; gap: 5px; }
+.share-purchases strong { font-size: 12px; }
+.share-purchases span { color: var(--muted); font-size: 10px; line-height: 1.5; overflow-wrap: anywhere; }
+.share-purchases .button { flex-shrink: 0; margin: 0; }
+@media (hover:hover) and (pointer:fine) { .share-plan:hover { border-color: var(--primary); background-color: var(--primary-pale); } }
+@media (max-width: 480px) {
+  .share-plans-content, .share-checkout-content { padding: 18px 16px; }
+  .share-plans { gap: 9px; }
+  .share-plan { padding: 16px 12px; border-radius: 16px; }
+  .share-plan-name { font-size: 14px; }
+  .share-plan-price { font-size: 36px; }
+  .share-plan-features { font-size: 10px; gap: 9px; }
+  .share-plan-detail { font-size: 11px; }
+  .share-plan-action { padding: 10px 8px; font-size: 10px; }
+  .share-package-tabs > .button { padding: 10px; font-size: 10px; gap: 6px; }
+}
 .personal-share-form > label { display: grid; gap: 7px; font-size: 12px; color: var(--primary); }
 .share-recipient-note { line-height: 1.7; }
 .install-guide .info-box > .button { margin-top: 14px; }

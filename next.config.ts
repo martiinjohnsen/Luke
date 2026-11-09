@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
           { key: "X-Frame-Options", value: "DENY" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(self), geolocation=()",
+            value: 'camera=(), microphone=(self), geolocation=(), payment=(self "https://checkout.stripe.com" "https://js.stripe.com")',
           },
         ],
       },

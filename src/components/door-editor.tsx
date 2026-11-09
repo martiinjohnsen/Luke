@@ -26,6 +26,7 @@ import { AudioInput } from "./audio-input";
 import { MediaImage } from "./media";
 import { Icon, type IconName } from "./icons";
 import { Dialog } from "./dialog";
+import { AutoTextarea } from "./auto-textarea";
 import { DoorQuestionsEditor, blankQuestion } from "./door-questions";
 import { ContentStack } from "./content-stack";
 import { OpeningEffectPicker } from "./opening-effect-picker";
@@ -412,7 +413,7 @@ export function DoorEditor({
             </label>
             <label>
               Beskrivelse
-              <textarea
+              <AutoTextarea
                 {...validationAttributes(issues, "activity-body")}
                 rows={3}
                 maxLength={3000}
@@ -492,7 +493,7 @@ export function DoorEditor({
           <div className="door-fixed-fields">
             <label>
               Tekst<span className="optional">Valgfritt</span>
-              <textarea
+              <AutoTextarea
                 {...validationAttributes(allIssues, "body")}
                 rows={4}
                 maxLength={6000}

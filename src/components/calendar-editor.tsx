@@ -8,6 +8,7 @@ import { Artwork } from "./artwork";
 import { DoorEditor } from "./door-editor";
 import { ShareDialog } from "./share-dialog";
 import { CalendarDeleteDialog } from "./calendar-delete-dialog";
+import { AutoTextarea } from "./auto-textarea";
 import { AppearancePicker } from "./appearance-picker";
 import { OwnerParticipants, useParticipants } from "./calendar-participants";
 import { GreetingInbox } from "./greetings";
@@ -51,6 +52,14 @@ export function CalendarEditor({ id }: { id: string }) {
     [editing, setEditing] = useState<number | null>(null),
     [confirmDelete, setConfirmDelete] = useState(false),
     [share, setShare] = useState(false);
+  const [shareOrder, setShareOrder] = useState<string>();
+  useEffect(() => {
+    const query = new URL(location.href).searchParams;
+    if (query.get("share") === "1") {
+      setShareOrder(query.get("order") ?? undefined);
+      setShare(true);
+    }
+  }, [id]);
   const participants=useParticipants(id,store.cloud && !!calendar && !isReceived(calendar));
   if (!store.cloud)
     return (
@@ -343,7 +352,10 @@ export function CalendarEditor({ id }: { id: string }) {
         />
       )}{" "}
       {share && (
-        <ShareDialog calendar={calendar} onClose={() => setShare(false)} />
+        <ShareDialog calendar={calendar} initialOrderId={shareOrder} onClose={() => {
+          setShare(false); setShareOrder(undefined);
+          if (new URL(location.href).searchParams.has("share")) router.replace(`/calendar/${id}`);
+        }} />
       )}
       {confirmDelete && (
         <CalendarDeleteDialog calendar={calendar} onClose={() => setConfirmDelete(false)} onDeleted={() => router.push("/calendars")} />
@@ -422,7 +434,7 @@ function CalendarSettings({
           </label>
           <label>
             Introduksjon
-            <textarea
+            <AutoTextarea
               rows={3}
               maxLength={1000}
               value={draft.description}
@@ -544,9 +556,9 @@ function CalendarSettings({
         </section>
       </div>
       <div className="dialog-actions">
-        <button type="button" className="button danger calendar-delete-button" onClick={onDelete}>
+        <button type="button" className="button danger calendar-delete-button" aria-label="Slett kalender" title="Slett kalender" onClick={onDelete}>
           <Icon name="trash" size={17} />
-          Slett kalender
+          <span>Slett kalender</span>
         </button>
         <button
           type="button"

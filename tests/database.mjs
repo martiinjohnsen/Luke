@@ -8,6 +8,7 @@ try {
   await db.exec(`
     create role anon nologin;
     create role authenticated nologin;
+    create role service_role nologin bypassrls;
     create schema auth;
     create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz default now(),raw_user_meta_data jsonb default '{}');
     create function auth.uid() returns uuid language sql stable as
@@ -29,15 +30,24 @@ try {
   ).sort()) {
     if (name.endsWith(".sql")) {
       const migration=await readFile(new URL("../supabase/migrations/"+name,import.meta.url),"utf8");
+      // Exercise the existing app before the paid-sharing upgrade changes its
+      // invitation permissions, then test that upgrade and its paid entry point.
+      if (name.startsWith("20261109")) continue;
       await db.exec(migration);
       if((name.startsWith("20261107") || name.startsWith("20261108"))) await db.exec(migration);
     }
   }
   for (const name of (await readdir(new URL("../supabase/tests/", import.meta.url))).sort()) {
     if (!name.endsWith(".sql")) continue;
+    if (name === "billing.sql") continue;
     const result = await db.exec(await readFile(new URL("../supabase/tests/" + name, import.meta.url), "utf8"));
     console.log(result.at(-1).rows[0].result);
   }
+  const billing = await readFile(new URL("../supabase/migrations/202611090001_paid_sharing.sql", import.meta.url), "utf8");
+  await db.exec(billing);
+  await db.exec(billing);
+  const result = await db.exec(await readFile(new URL("../supabase/tests/billing.sql", import.meta.url), "utf8"));
+  console.log(result.at(-1).rows[0].result);
 } catch (error) {
   console.error(error.message);
   if (error.where) console.error(error.where);
