@@ -1,5 +1,5 @@
 /* Cache only the public shell. Account data never enters the service-worker cache. */
-const CACHE = "luke-shell-2026-11-09-paid-sharing-v24";
+const CACHE = "luke-shell-2026-11-09-free-sharing-v25";
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {

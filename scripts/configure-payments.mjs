@@ -1,5 +1,6 @@
 // Run by the account owner. Keys are entered without echo and never printed.
 import Stripe from 'stripe';
+import { PAID_SHARING_ENABLED } from '../src/lib/sharing-mode.ts';
 import { createClient } from '@supabase/supabase-js';
 import { publicCloudConfig } from '../src/lib/cloud/public-config.ts';
 import { readFile, writeFile, chmod, access } from 'node:fs/promises';
@@ -8,6 +9,11 @@ import { Writable } from 'node:stream';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+
+if (!PAID_SHARING_ENABLED) {
+  console.error('Betaling er satt på pause. Kalenderdeling er gratis. Betalingskoden er bevart; se BETALING.md før en senere aktivering.');
+  process.exit(1);
+}
 
 const useVercel=process.argv.includes('--vercel');
 const deploy=process.argv.includes('--deploy');

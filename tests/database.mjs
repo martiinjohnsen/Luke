@@ -39,15 +39,24 @@ try {
   }
   for (const name of (await readdir(new URL("../supabase/tests/", import.meta.url))).sort()) {
     if (!name.endsWith(".sql")) continue;
-    if (name === "billing.sql") continue;
+    if (name === "billing.sql" || name.startsWith("free_sharing_")) continue;
     const result = await db.exec(await readFile(new URL("../supabase/tests/" + name, import.meta.url), "utf8"));
     console.log(result.at(-1).rows[0].result);
   }
+  const freeSharing = await readFile(new URL("../supabase/migrations/202611090002_restore_free_sharing.sql", import.meta.url), "utf8");
+  // The restoration also works on installations that never enabled payments.
+  await db.exec(freeSharing);
+  await db.exec(freeSharing);
   const billing = await readFile(new URL("../supabase/migrations/202611090001_paid_sharing.sql", import.meta.url), "utf8");
   await db.exec(billing);
   await db.exec(billing);
   const result = await db.exec(await readFile(new URL("../supabase/tests/billing.sql", import.meta.url), "utf8"));
   console.log(result.at(-1).rows[0].result);
+  await db.exec(await readFile(new URL("../supabase/tests/free_sharing_setup.sql", import.meta.url), "utf8"));
+  await db.exec(freeSharing);
+  await db.exec(freeSharing);
+  const restored = await db.exec(await readFile(new URL("../supabase/tests/free_sharing_restore.sql", import.meta.url), "utf8"));
+  console.log(restored.at(-1).rows[0].result);
 } catch (error) {
   console.error(error.message);
   if (error.where) console.error(error.where);

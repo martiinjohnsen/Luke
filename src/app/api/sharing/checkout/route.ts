@@ -1,8 +1,10 @@
 import { billingFailure, BillingError, checkoutForOrder, paymentUser, stripe } from "@/lib/server/billing";
 import { sharingKind, type ShareOrder } from "@/lib/billing";
+import { PAID_SHARING_ENABLED } from "@/lib/sharing-mode";
 export const runtime = "nodejs";
 export async function POST(request: Request) {
   try {
+    if (!PAID_SHARING_ENABLED) throw new BillingError("Kalenderdeling er gratis. Åpne delingsvinduet på nytt.", 409);
     const { client } = await paymentUser(request);
     stripe();
     const body = await request.json();

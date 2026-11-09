@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PAID_SHARING_ENABLED } from "@/lib/sharing-mode";
 import { Icon } from "@/components/icons";
 
 export default function PrivacyPage() {
@@ -24,10 +25,10 @@ export default function PrivacyPage() {
           <h2><Icon name="mic" size={19} /> Bilder, lyd og hilsener tilbake</h2>
           <p>Bilder og lydfiler lagres privat hos Supabase. Bare avsender og mottakere med tilgang til den aktuelle luka kan hente vedleggene. Mikrofonen brukes bare når du selv starter et opptak. Hilsener du sender tilbake, med tekst og eventuelle bilder eller lydopptak, vises til kalenderens avsender. Andre mottakere ser ikke hilsenene dine. Du kan endre en sendt hilsen senere.</p>
         </section>
-        <section>
+        {PAID_SHARING_ENABLED && <section>
           <h2><Icon name="lock" size={19} /> Når du betaler for deling</h2>
           <p>Stripe behandler betalingen. Kortnummer og sikkerhetskode skrives i Stripes betalingsskjema og går direkte til Stripe. Luke lagrer hvilken delingspakke du har kjøpt, beløp, betalingsstatus og referanser til betalingen. Kjøpet knyttes til kontoen og kalenderen din, slik at du kan dele senere uten å betale på nytt. Når en invitasjon klargjøres, lagres mottakeradressene og hilsenen sammen med kjøpet, slik at den samme invitasjonen kan sendes på nytt.</p>
-        </section>
+        </section>}
         <section>
           <h2><Icon name="cloud" size={19} /> Hvor opplysningene lagres</h2>
           <p>Supabase håndterer innlogging og lagring på kontoen. Vercel drifter nettsiden. Nettleseren lagrer innloggingsøkten og en lokal kopi av kalenderdata, slik at blant annet utkast kan beholdes ved nettverksfeil. YouTube-videoer lastes først når du velger å spille dem av.</p>
