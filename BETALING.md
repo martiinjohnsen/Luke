@@ -46,7 +46,7 @@ til å opprette nye gratisinvitasjoner være stengt, og
 aktiverer ikke betaling; kodeflagget styrer vinduet.
 
 Betalingsmigreringen er allerede kjørt i hovedprosjektet. For live-modus må
-en egen Stripe live secret key opprettes for Luke, en live webhook til
+en egen Stripe live restricted key er opprettet for Luke, en live webhook til
 `https://luke-kalender.vercel.app/api/stripe/webhook` opprettes med de tre
 hendelsene nedenfor, Vercels tre Stripe-variabler byttes til live-verdier,
 og `configure_luke_billing(true)` kjøres i Supabase. En ny produksjonsdeploy

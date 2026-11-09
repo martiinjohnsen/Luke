@@ -7,7 +7,7 @@ import type { SharingKind } from "../personal-sharing";
 const url = () => process.env.NEXT_PUBLIC_SUPABASE_URL || publicCloudConfig.url;
 const publicKey = () => process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || publicCloudConfig.publishableKey;
 export const billingConfigured = () => {
-  const mode = process.env.STRIPE_SECRET_KEY?.match(/^sk_(test|live)_/)?.[1];
+  const mode = process.env.STRIPE_SECRET_KEY?.match(/^(?:sk|rk)_(test|live)_/)?.[1];
   return !!(mode && process.env.STRIPE_PUBLISHABLE_KEY?.startsWith(`pk_${mode}_`) && process.env.STRIPE_WEBHOOK_SECRET?.startsWith("whsec_") && process.env.SUPABASE_SERVICE_ROLE_KEY);
 };
 export class BillingError extends Error {
@@ -16,10 +16,10 @@ export class BillingError extends Error {
 export function stripe() {
   if (!billingConfigured()) throw new BillingError("Betaling er ikke tilgjengelig ennå. Prøv igjen senere.", 503);
   const key = process.env.STRIPE_SECRET_KEY!;
-  if (!/^sk_(test|live)_/.test(key)) throw new BillingError("Betaling er ikke tilgjengelig akkurat nå.", 503);
+  if (!/^(?:sk|rk)_(test|live)_/.test(key)) throw new BillingError("Betaling er ikke tilgjengelig akkurat nå.", 503);
   return new Stripe(key, { maxNetworkRetries: 2, timeout: 15000 });
 }
-const liveMode = () => process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_") === true;
+const liveMode = () => /^(?:sk|rk)_live_/.test(process.env.STRIPE_SECRET_KEY || "");
 function admin() {
   if (!process.env.SUPABASE_SERVICE_ROLE_KEY) throw new BillingError("Betaling er ikke tilgjengelig ennå.", 503);
   return createClient(url(), process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });

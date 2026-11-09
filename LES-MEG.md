@@ -319,6 +319,23 @@ og lagre live-hemmeligheter på Vercel er bedt om etter nettleserverktøyets
 sikkerhetsregel. Ikke publiser testtekstfjerningen som ferdig live-løsning før
 produksjonskonfigurasjonen faktisk er skiftet.
 
+Senere samme kveld godkjente Martin live-oppsettet. Stripe krevde verifisering
+via e-post; Martin fullførte den. En begrenset Stripe live-nøkkel for
+engangsbetalinger ble opprettet og rotert før lagring. `STRIPE_SECRET_KEY` og
+`STRIPE_PUBLISHABLE_KEY` ble byttet til live i Vercel Production. Koden er
+utvidet til å godta Stripes `rk_live_…`-nøkler. Live webhook-destinasjonen
+`we_1UZzshJfAPNNWEhwQ80JG9Ic` er Active på
+`https://luke-kalender.vercel.app/api/stripe/webhook` med
+`checkout.session.completed`, `checkout.session.async_payment_succeeded` og
+`charge.refunded`. Webhook-hemmeligheten ble rotert før den ble lagret i
+`STRIPE_WEBHOOK_SECRET` i Vercel Production. Ingen av disse hemmelighetene
+finnes i prosjektfilene. Supabase-prosjekt `rybrqiicknqjmoimiegx` fikk
+`configure_luke_billing(true)`, og SQL-resultatet viste `livemode=true`.
+`npm run check` besto igjen etter støtte for begrensede Stripe-nøkler.
+GJENSTÅR: commit/push av denne siste kodeendringen, Vercel Ready-deploy og
+en fokusert kontroll av at Checkout kan opprettes i live-modus. Ekte
+transaksjon gjennomfører Martin selv.
+
 ## Arbeidsflyt for endringer og publisering
 
 1. Les denne filen og `AGENTS.md`. Sjekk Git-status, branch og relevante filer.

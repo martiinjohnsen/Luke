@@ -55,9 +55,9 @@ function save(values) {
 }
 try {
   console.log('Bruk testnøkler først hvis Stripe-oppsettet ikke er prøvd ennå. Ingen betaling gjennomføres av dette oppsettet.');
-  const sk=await ask('STRIPE_SECRET_KEY','Stripe secret key (sk_test_… eller sk_live_…):',true);
+  const sk=await ask('STRIPE_SECRET_KEY','Stripe secret/restricted key (sk_/rk_ test eller live):',true);
   const pk=await ask('STRIPE_PUBLISHABLE_KEY','Stripe publishable key (pk_test_… eller pk_live_…):');
-  const mode=sk.match(/^sk_(test|live)_/)?.[1];
+  const mode=sk.match(/^(?:sk|rk)_(test|live)_/)?.[1];
   if(!mode || !pk.startsWith(`pk_${mode}_`)) throw new Error('Stripe-nøklene må komme fra samme modus: test eller live.');
   const serviceKey=await ask('SUPABASE_SERVICE_ROLE_KEY','Supabase secret/service_role key (skjult):',true);
   let serviceRole=serviceKey.startsWith('sb_secret_');
