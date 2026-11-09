@@ -74,7 +74,6 @@ export function PaidShareDialog({calendar,onClose,initialOrderId}:{calendar:Adve
       <span className="large-icon"><Icon name="gift" size={30}/></span>
       <h3>{calendar.title}</h3>
       <p className="muted">{completedCount(calendar)} av 24 luker er fylt.</p>
-      <p className="info-box" role="status"><strong>Testbetaling</strong><br/>Betalingen bruker Stripe i testmodus. Ingen ekte penger trekkes.</p>
       {store.cloud ? <>
         <button type="button" className="button primary full" disabled={busy} onClick={()=>{setError('');setPurchaseId(undefined);setComposing(true);}}><Icon name="share" size={17}/>Del kalenderen</button>
         {!!purchases.data?.orders.some(o=>o.status==='paid' || o.status==='pending') && <section className="share-purchases" aria-label="Dine delingskjøp"><h4>Dine delingskjøp</h4>{purchases.data.orders.filter(o=>o.status==='paid' || o.status==='pending').map(order=><div key={order.id}>

@@ -85,11 +85,15 @@ export async function checkoutForOrder(order: ShareOrder, kind: SharingKind) {
     const origin = new URL(process.env.LUKE_APP_URL || "https://luke-kalender.vercel.app").origin;
     session = await service.checkout.sessions.create({
       ui_mode: "embedded_page", mode: "payment", locale: "nb", redirect_on_completion: "if_required",
+      // Managed Payments is enabled by default on some Stripe accounts, but Luke
+      // uses standard Checkout. Managed Payments requires separate onboarding
+      // and an eligible product tax code.
+      managed_payments: { enabled: false },
       return_url: `${origin}/calendar/${encodeURIComponent(order.calendarId)}?share=1&order=${order.id}`,
       line_items: [{ quantity: 1, price_data: { currency: "nok", unit_amount: SHARE_PLANS[kind].amount,
         product_data: { name: `Luke · ${SHARE_PLANS[kind].name}`, description: kind === "person" ? "Del én kalender med én mottaker. Engangsbetaling." : "Del én kalender med 2–50 mottakere. Engangsbetaling." } } }],
       metadata: identity, payment_intent_data: { metadata: identity },
-    }, { idempotencyKey: `luke-share-${order.id}` });
+    }, { idempotencyKey: `luke-share-v2-${order.id}` });
     const { error: attachError } = await admin().rpc("attach_luke_share_checkout", { p_order_id: order.id, p_session_id: session.id, p_livemode: session.livemode });
     if (attachError) throw new BillingError("Betalingen kunne ikke klargjøres. Prøv igjen.", 503);
   }
@@ -98,5 +102,10 @@ export async function checkoutForOrder(order: ShareOrder, kind: SharingKind) {
 }
 export function billingFailure(error: unknown) {
   if (error instanceof BillingError) return Response.json({ error: error.message }, { status: error.status });
+  if (error instanceof Stripe.errors.StripeError) {
+    console.error("Stripe billing request failed", { type: error.type, code: error.code, requestId: error.requestId, statusCode: error.statusCode });
+  } else {
+    console.error("Billing request failed", error instanceof Error ? error.message : "Unknown error");
+  }
   return Response.json({ error: "Betalingen kunne ikke kontrolleres akkurat nå. Prøv igjen." }, { status: 503 });
 }
