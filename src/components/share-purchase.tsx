@@ -28,6 +28,7 @@ export function SharePurchaseFlow({ calendar, source, initialOrderId, onBack, on
   const close = () => { void source.refresh().catch(() => {}); onBack(); };
   if (!chosenKind) return <Dialog title="Del kalenderen" onClose={close} wide footer={<div className="dialog-actions"><button type="button" className="button secondary" onClick={close}>Tilbake</button></div>}>
     <div className="share-plans-content">
+      <p className="info-box" role="status"><strong>Testbetaling</strong><br/>Ingen ekte penger trekkes. Deling blir tilgjengelig etter en fullført testbetaling.</p>
       <p className="share-plan-intro">Velg en delingspakke for <strong>{calendar.title}</strong>.</p>
       {initialOrderId && !source.data && <p role="status">Kontrollerer kjøpet …</p>}
       <div className="share-plans">{(["person", "group"] as const).map(value => {
@@ -49,6 +50,7 @@ export function SharePurchaseFlow({ calendar, source, initialOrderId, onBack, on
   if (paid) return <PaidInvitationComposer key={paid.id} calendar={calendar} order={paid} onBack={close} onDone={() => { void source.refresh().catch(() => {}); onDone(); }} />;
   return <Dialog title="Betal for deling" onClose={close} wide footer={<div className="dialog-actions"><button type="button" className="button secondary" onClick={() => { setKind(null); setSelectedId(null); }}>Tilbake</button><span className="field-help">Engangsbetaling · {SHARE_PLANS[chosenKind].price}</span></div>}>
     <div className="share-checkout-content">{tabs}
+      <p className="info-box" role="status"><strong>Stripe-test</strong><br/>Ingen ekte penger trekkes. Bruk testkortnummeret 4242 4242 4242 4242, en fremtidig utløpsdato og valgfri sikkerhetskode.</p>
       <p>Etter betaling velger du mottakere og skriver en hilsen.</p>
       {source.error && <p className="form-error" role="alert">{source.error}<button type="button" className="text-link" onClick={() => void source.refresh().catch(() => {})}>Kontroller på nytt</button></p>}
       {source.data?.configured === false ? <div className="info-box" role="status">Betaling er ikke tilgjengelig ennå. Prøv igjen senere.</div> :

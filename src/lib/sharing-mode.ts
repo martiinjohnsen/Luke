@@ -1,3 +1,3 @@
-// Sharing is free. Keep the Stripe implementation available for a later launch.
-// Before enabling it, revoke the free invitation grant as described in BETALING.md.
-export const PAID_SHARING_ENABLED = false;
+// Public checkout currently uses Stripe test keys. Switch to live keys only after
+// an end-to-end test and the launch checks in BETALING.md.
+export const PAID_SHARING_ENABLED = true;

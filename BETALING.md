@@ -1,21 +1,17 @@
 # Betaling for kalenderdeling
 
-## Nå: gratis deling
+## Nå: offentlig Stripe-test
 
-Kalenderdeling er gratis for både enkeltperson og gruppe. Den tidligere
-delingsmenyen brukes igjen. All betalingskode, Stripe-integrasjonen og
-databasetabellene for kjøp er bevart. Ingen kjøp eller invitasjoner slettes.
+Delingsvinduet viser testbetaling for enkeltperson og gruppe. Stripe bruker
+testnøkler, så ingen ekte penger trekkes. Eksisterende kalendere, invitasjoner,
+lenker og mottakerfremdrift beholdes.
 
-`src/lib/sharing-mode.ts` har `PAID_SHARING_ENABLED = false`. Dette velger
-gratis delingsvindu og sperrer opprettelse av nye Stripe-betalingsøkter,
-selv om Stripe-nøkler allerede ligger på Vercel. Eksisterende betalingsvarsler
-kan fortsatt behandles. Oppsettsprogrammet aktiverer ikke betaling i denne modusen.
+`src/lib/sharing-mode.ts` har `PAID_SHARING_ENABLED = true`. Dette viser
+betalingsvinduet og åpner for Stripe-testøkter. Betalingsvinduet og kortskjemaet
+er merket «Testbetaling». Dette er ikke en lansering med ekte betaling.
 
-Hvis betalingsmigreringen allerede er kjørt, kjør også
-`supabase/migrations/202611090002_restore_free_sharing.sql` i Supabase.
-Den gjenåpner bare den eksisterende, e-postbegrensede person-/gruppeinvitasjonen
-for innloggede eiere. Den endrer ingen kalenderdata, lenker, fremdrift eller kjøp.
-`node scripts/check-free-sharing.mjs` kontrollerer tilgangen uten å skrive data.
+Den tidligere gratisinvitasjonsfunksjonen må ikke være tilgjengelig for nye
+invitasjoner i denne modusen. Eksisterende invitasjoner er fremdeles gyldige.
 
 ## Bevart betalingsløsning for senere
 
@@ -31,18 +27,17 @@ betaling. Appen kan ikke vite om brukeren faktisk trykker Send i e-postappen.
 
 Status 9. november 2026: Stripe-testwebhooken og fem hemmelige Production-
 variabler er satt opp i Vercel, og en testrefusjon nådde webhooken med HTTP 200.
-Det offentlige betalingsvinduet er fortsatt avslått. Den simulerte refusjonen
+Det offentlige betalingsvinduet er nå på i Stripe-testmodus. Den simulerte refusjonen
 var ikke et Luke-kjøp og opprettet én refusjonsmarkør uten ordre i databasen.
 Lokal kode er derfor endret slik at refusjoner må ha Lukes merking på
 PaymentIntent før de registreres. Rettelsen er publisert i commit `50c4d8d`.
-En hel kjøpsflyt er ikke testet; den krever et isolert testoppsett før
-betalingsvinduet kan aktiveres.
+En hel kjøpsflyt er ennå ikke bekreftet. Ingen ekte betalingsnøkler skal tas
+i bruk før dette er kontrollert.
 
-Disse trinnene gjelder først ved en senere aktivering. Før det betalte vinduet
-publiseres, må gratistilgangen stenges igjen ved å kjøre den bevarte
-betalingsmigreringen nedenfor. Kontroller at `luke_free_sharing_ready()` da
-returnerer `0`. Deretter kan `PAID_SHARING_ENABLED` settes til `true` og
-Stripe-oppsettet testes. Bare å legge inn Stripe-nøkler aktiverer ikke betaling.
+Betalingsmigreringen er kjørt i Supabase. Ved testvisningen skal tilgangen
+til å opprette nye gratisinvitasjoner være stengt, og
+`luke_free_sharing_ready()` skal returnere `0`. Bare å legge inn Stripe-nøkler
+aktiverer ikke betaling; kodeflagget styrer vinduet.
 
 1. Kjør `supabase/migrations/202611090001_paid_sharing.sql` i SQL-editoren i
    det eksisterende Supabase-prosjektet. Den beholder eksisterende kalendere,
