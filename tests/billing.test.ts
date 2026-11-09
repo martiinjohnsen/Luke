@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import Stripe from "stripe";
-import { BILLING_SCOPE, SHARE_PLANS, paidCheckoutDetails } from "../src/lib/billing.ts";
+import { BILLING_SCOPE, SHARE_PLANS, isLukeRefundIntent, paidCheckoutDetails } from "../src/lib/billing.ts";
 
 const paid = () => ({
   id: "cs_test_example", mode: "payment", status: "complete", payment_status: "paid", currency: "nok", amount_total: 1900, livemode: false,
@@ -36,4 +36,11 @@ test("Stripe signatures require the exact signed body and reject tampering, wron
   assert.throws(() => stripe.webhooks.constructEvent(payload, signature, "wrong-secret"));
   const expired = stripe.webhooks.generateTestHeaderString({ payload, secret, timestamp: Math.floor(Date.now() / 1000) - 600 });
   assert.throws(() => stripe.webhooks.constructEvent(payload, expired, secret));
+});
+test("refunds from other Stripe products and the wrong mode do not belong to Luke sharing", () => {
+  const intent = { metadata: { scope: BILLING_SCOPE }, livemode: false };
+  assert.equal(isLukeRefundIntent(intent, false), true);
+  assert.equal(isLukeRefundIntent({ ...intent, metadata: { scope: "another-product" } }, false), false);
+  assert.equal(isLukeRefundIntent({ ...intent, metadata: {} }, false), false);
+  assert.equal(isLukeRefundIntent(intent, true), false);
 });

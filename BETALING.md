@@ -29,6 +29,15 @@ betaling. Appen kan ikke vite om brukeren faktisk trykker Send i e-postappen.
 
 ## Oppsett
 
+Status 9. november 2026: Stripe-testwebhooken og fem hemmelige Production-
+variabler er satt opp i Vercel, og en testrefusjon nådde webhooken med HTTP 200.
+Det offentlige betalingsvinduet er fortsatt avslått. Den simulerte refusjonen
+var ikke et Luke-kjøp og opprettet én refusjonsmarkør uten ordre i databasen.
+Lokal kode er derfor endret slik at refusjoner må ha Lukes merking på
+PaymentIntent før de registreres. Denne endringen er ikke publisert ennå.
+En hel kjøpsflyt er ikke testet; den krever et isolert testoppsett før
+betalingsvinduet kan aktiveres.
+
 Disse trinnene gjelder først ved en senere aktivering. Før det betalte vinduet
 publiseres, må gratistilgangen stenges igjen ved å kjøre den bevarte
 betalingsmigreringen nedenfor. Kontroller at `luke_free_sharing_ready()` da

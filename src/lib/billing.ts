@@ -13,6 +13,11 @@ export type ShareOrder = {
 export const sharingKind = (value: unknown): value is SharingKind => value === "person" || value === "group";
 export const orderId = (value: unknown): value is string => typeof value === "string" && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(value);
 
+/** A Stripe account may receive refunds for products other than Luke sharing. */
+export function isLukeRefundIntent(intent: { metadata: Record<string, string>; livemode: boolean }, live: boolean) {
+  return intent.livemode === live && intent.metadata.scope === BILLING_SCOPE;
+}
+
 type Checkout = {
   id: string; status: string | null; payment_status: string; mode: string | null;
   currency: string | null; amount_total: number | null; livemode: boolean;

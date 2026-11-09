@@ -1,7 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { publicCloudConfig } from "../cloud/public-config";
-import { BILLING_SCOPE, SHARE_PLANS, paidCheckoutDetails, type ShareOrder } from "../billing";
+import { BILLING_SCOPE, SHARE_PLANS, isLukeRefundIntent, paidCheckoutDetails, type ShareOrder } from "../billing";
 import type { SharingKind } from "../personal-sharing";
 
 const url = () => process.env.NEXT_PUBLIC_SUPABASE_URL || publicCloudConfig.url;
@@ -49,8 +49,10 @@ export async function settleCheckout(session: Stripe.Checkout.Session) {
   return true;
 }
 export async function refundPayment(charge: Stripe.Charge) {
-  if (!charge.payment_intent || charge.amount_refunded < charge.amount) return;
+  if (!charge.payment_intent || charge.amount_refunded < charge.amount || charge.livemode !== liveMode()) return;
   const id = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent.id;
+  const intent = await stripe().paymentIntents.retrieve(id);
+  if (intent.id !== id || !isLukeRefundIntent(intent, liveMode())) return;
   const { error } = await admin().rpc("refund_luke_share_payment", { p_payment_intent: id });
   if (error) throw new BillingError("Refusjonen kunne ikke registreres.", 503);
 }
