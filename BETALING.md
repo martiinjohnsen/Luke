@@ -34,7 +34,7 @@ variabler er satt opp i Vercel, og en testrefusjon nådde webhooken med HTTP 200
 Det offentlige betalingsvinduet er fortsatt avslått. Den simulerte refusjonen
 var ikke et Luke-kjøp og opprettet én refusjonsmarkør uten ordre i databasen.
 Lokal kode er derfor endret slik at refusjoner må ha Lukes merking på
-PaymentIntent før de registreres. Denne endringen er ikke publisert ennå.
+PaymentIntent før de registreres. Rettelsen er publisert i commit `50c4d8d`.
 En hel kjøpsflyt er ikke testet; den krever et isolert testoppsett før
 betalingsvinduet kan aktiveres.
 
