@@ -57,6 +57,7 @@ export function CalendarLibrary() {
         </div>
         <div className="hero-scene">
           <Artwork
+            fit="cover"
             scene={{
               house: "classic",
               sky: "stars",
