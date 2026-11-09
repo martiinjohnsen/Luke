@@ -1,12 +1,14 @@
 # Betaling for kalenderdeling
 
-## Nå: overgang til ekte betaling pågår
+## Nå: live Checkout er publisert
 
-Delingsvinduet er aktivert for enkeltperson og gruppe. Koden er rettet for
-standard Stripe Checkout og testmerking er fjernet lokalt. Produksjonsmiljøet
-bruker fortsatt testnøkler per 9. november kl. 22, så dette er ennå ikke
-ekte betaling. Eksisterende kalendere, invitasjoner, lenker og mottakerfremdrift
-beholdes.
+Delingsvinduet er aktivert for enkeltperson og gruppe. Produksjon bruker
+Stripe live-nøkler, live-webhook og `livemode=true` i Supabase. Koden for
+standard Stripe Checkout er publisert, og testmerkingen er fjernet. Offentlig
+Checkout åpnet 9. november 2026 med live-nøkkel og riktig pris for
+Enkeltperson, 19 kr. En faktisk betaling og påfølgende invitasjon er ennå
+ikke gjennomført og kan derfor ikke regnes som verifisert. Eksisterende
+kalendere, invitasjoner, lenker og mottakerfremdrift beholdes.
 
 `src/lib/sharing-mode.ts` har `PAID_SHARING_ENABLED = true`. Stripe-nøklene og
 databasens betalingsmodus avgjør om økten er test eller live.
@@ -26,10 +28,10 @@ betaling. Appen kan ikke vite om brukeren faktisk trykker Send i e-postappen.
 
 ## Oppsett
 
-Status 9. november 2026: Stripe-testwebhooken og fem hemmelige Production-
-variabler er satt opp i Vercel, og en testrefusjon nådde webhooken med HTTP 200.
-Det offentlige betalingsvinduet er nå på i Stripe-testmodus. Den simulerte refusjonen
-var ikke et Luke-kjøp og opprettet én refusjonsmarkør uten ordre i databasen.
+Historikk: Stripe-testwebhooken og fem hemmelige Production-variabler ble
+satt opp i Vercel, og en testrefusjon nådde webhooken med HTTP 200. Den
+simulerte refusjonen var ikke et Luke-kjøp og opprettet én refusjonsmarkør
+uten ordre i databasen.
 Lokal kode er derfor endret slik at refusjoner må ha Lukes merking på
 PaymentIntent før de registreres. Rettelsen er publisert i commit `50c4d8d`.
 Stripe Workbench viste senere at alle Checkout-forsøk ble avvist med HTTP 400:
@@ -37,20 +39,20 @@ kontoen aktiverte Managed Payments som standard, og produktene manglet
 avgiftskode. Lokal kode sender nå `managed_payments.enabled=false` for standard
 Checkout. Idempotensnøkkelen er endret fra `luke-share-…` til
 `luke-share-v2-…`, slik at uferdige ordre kan prøve igjen uten å få det
-tidligere 400-svaret. Denne rettelsen er ennå ikke publisert eller kontrollert
-mot Stripe. Stripe-kontoens Managed Payments-oppsett er separat og uferdig.
+tidligere 400-svaret. Rettelsen er publisert i `3658aac` og kontrollert ved
+at live Checkout åpner. Standard Checkout brukes for Luke.
 
-Betalingsmigreringen er kjørt i Supabase. Ved testvisningen skal tilgangen
-til å opprette nye gratisinvitasjoner være stengt, og
+Betalingsmigreringen er kjørt i Supabase. Tilgangen til å opprette nye
+gratisinvitasjoner er stengt, og
 `luke_free_sharing_ready()` skal returnere `0`. Bare å legge inn Stripe-nøkler
 aktiverer ikke betaling; kodeflagget styrer vinduet.
 
-Betalingsmigreringen er allerede kjørt i hovedprosjektet. For live-modus må
-en egen Stripe live restricted key er opprettet for Luke, en live webhook til
-`https://luke-kalender.vercel.app/api/stripe/webhook` opprettes med de tre
-hendelsene nedenfor, Vercels tre Stripe-variabler byttes til live-verdier,
-og `configure_luke_billing(true)` kjøres i Supabase. En ny produksjonsdeploy
-må deretter bli Ready. Ikke legg nøkler i chatten eller kildekoden.
+Live-oppsettet ble fullført samme kveld: en begrenset Stripe live-nøkkel for
+engangsbetalinger, live-webhook til
+`https://luke-kalender.vercel.app/api/stripe/webhook`, tre live Stripe-variabler
+i Vercel Production og `configure_luke_billing(true)` i Supabase-prosjekt
+`rybrqiicknqjmoimiegx`. Deployen for `77fcc7b` ble «Ready». Ingen
+nøkkelverdier er lagret i kildekoden eller denne dokumentasjonen.
 
 Servervariablene er `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`,
 `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY` og `LUKE_APP_URL`.
@@ -63,11 +65,12 @@ en betalingsmåte før Stripe tilbyr den.
 
 ## Kontroll etter live-oppsett
 
-Kontroller at Checkout åpnes for begge pakkene, at Stripe viser riktig beløp,
-og at en faktisk betaling gir «Betalt» og åpner invitasjonsformen. Lukk vinduet
-før mottakerne fylles inn, åpne deling igjen og kontroller at kjøpet fortsatt
-er betalt. Klargjør en e-post og prøv «Send på nytt». Martin gjennomfører selv
-en eventuell ekte transaksjon og visuell gjennomgang.
+Live Checkout er kontrollert for Enkeltperson til 19 kr. Kontroller Gruppe
+til 29 kr ved behov. Martin gjennomfører én faktisk betaling og kontrollerer
+at den gir «Betalt» og åpner invitasjonsformen. Lukk vinduet før mottakerne
+fylles inn, åpne deling igjen og kontroller at kjøpet fortsatt er betalt.
+Klargjør en e-post og prøv «Send på nytt». Martin gjør selv den visuelle
+gjennomgangen.
 
 Stripe-webhooken er `/api/stripe/webhook` og mottar
 `checkout.session.completed` og `checkout.session.async_payment_succeeded`.

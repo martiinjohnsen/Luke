@@ -332,9 +332,18 @@ utvidet til å godta Stripes `rk_live_…`-nøkler. Live webhook-destinasjonen
 finnes i prosjektfilene. Supabase-prosjekt `rybrqiicknqjmoimiegx` fikk
 `configure_luke_billing(true)`, og SQL-resultatet viste `livemode=true`.
 `npm run check` besto igjen etter støtte for begrensede Stripe-nøkler.
-GJENSTÅR: commit/push av denne siste kodeendringen, Vercel Ready-deploy og
-en fokusert kontroll av at Checkout kan opprettes i live-modus. Ekte
-transaksjon gjennomfører Martin selv.
+Endringene ble pushet til `main` i commitene `3658aac` og `77fcc7b`.
+Vercel-deployen for `77fcc7b` ble kontrollert til «Ready» 9. november 2026
+kl. 22:18. På den offentlige kalenderen åpnet Enkeltperson Stripe Checkout
+med live publishable key og riktig beløp, 19 kr. Testtekst er borte. Det ble
+ikke gjort et faktisk korttrekk. Dermed er opprettelse av live Checkout
+verifisert, mens betaling, webhook for fullført kjøp, «Betalt»-status,
+invitasjonsflyt etter kjøp og refusjon i live-modus fortsatt ikke er
+verifisert ende til ende. Martin gjør én ekte betaling og vanlig visuell
+gjennomgang selv. Ikke kall hele kjøpsflyten verifisert før dette er gjort.
+Etter kodepushen var `origin/main..HEAD` tom. Tidligere lokale endringer i
+`.gitignore`, `README.md`, `CLAUDE.md`, `START-HER.md` og
+`START-LUKE.command` tilhører Martin og skal ikke inkluderes i denne leveransen.
 
 ## Arbeidsflyt for endringer og publisering
 
